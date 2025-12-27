@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "Kiwi Tab",
+  "version": "0.1.0",
+  "description": "A modern Chrome new tab replacement with enhanced features",
+  "author": "Kaiyum Mirza",
+  
+  "chrome_url_overrides": {
+    "newtab": "index.html"
+  },
+
+  "permissions": [
+    "storage"
+  ],
+
+  "host_permissions": [
+    "https://suggestqueries.google.com/*",
+    "https://api.duckduckgo.com/*",
+    "https://en.wikipedia.org/*",
+    "https://chatgpt.com/*",
+    "https://www.perplexity.ai/*",
+    "https://gemini.google.com/*"
+  ],
+
+  "icons": {
+    "16": "icon/kiwi-16.png",
+    "32": "icon/kiwi-32.png",
+    "48": "icon/kiwi-48.png",
+    "128": "icon/kiwi-128.png"
+  }
+}

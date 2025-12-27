@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/kiwi.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kiwi Tab</title>
+    <!-- Preload Inter font to prevent layout shift -->
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <script>
+      // Immediately set theme to prevent flash of unstyled content (FOUC)
+      (function() {
+        const stored = localStorage.getItem('vite-ui-theme');
+        const theme = stored === 'light' ? 'light' : 
+                      stored === 'dark' ? 'dark' :
+                      window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.classList.add(theme);
+      })();
+    </script>
+    <style>
+      /* Prevent flash with initial background and fade-in animation */
+      html { 
+        background-color: #1a1a1a; 
+      }
+      html.light { 
+        background-color: #ffffff; 
+      }
+      
+      /* Page fade-in animation - slightly longer delay for fonts to load */
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      
+      body {
+        opacity: 0;
+        animation: fadeIn 0.3s ease-out 0.1s forwards;
+      }
+      
+      /* Prevent layout shift with min-height on root */
+      #root {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
