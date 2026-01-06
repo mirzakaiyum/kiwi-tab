@@ -5,8 +5,8 @@ import { WidgetGrid } from "./components/widget-grid";
 import { ScrollArea } from "./components/ui/scroll-area";
 
 // Lazy-load deferred components (not critical for initial render)
-const SettingsButton = lazy(() => import("./components/settings-button"));
-const CustomizeButton = lazy(() => import("./components/customize-button"));
+const SettingsButton = lazy(() => import("./components/settings-panel"));
+const CustomizeButton = lazy(() => import("./components/customize-widgets"));
 
 
 const BACKGROUND_TYPE_KEY = "kiwi-background-type";
@@ -57,7 +57,10 @@ export function App() {
     const [currentBackground, setCurrentBackground] = useState(() => 
         ALIVE_BACKGROUNDS[getBackgroundIndex()]
     );
-    const [backgroundLoaded, setBackgroundLoaded] = useState(false);
+    // Start with background visible if already set to "alive" to prevent flash
+    const [backgroundLoaded, setBackgroundLoaded] = useState(() => 
+        (localStorage.getItem(BACKGROUND_TYPE_KEY) as "minimal" | "alive") === "alive"
+    );
     const [pickerOpen, setPickerOpen] = useState(false);
     const [widgetCount, setWidgetCount] = useState(() => {
         try {
@@ -68,12 +71,19 @@ export function App() {
         }
     });
 
-    // Reset loading state when background type changes
+    // Handle background loading with fallback timer
     useEffect(() => {
-        if (backgroundType === "alive") {
+        if (backgroundType === "alive" && !backgroundLoaded) {
+            // Fallback: show background after 2 seconds even if load event doesn't fire
+            const fallbackTimer = setTimeout(() => {
+                setBackgroundLoaded(true);
+            }, 2000);
+            return () => clearTimeout(fallbackTimer);
+        }
+        if (backgroundType === "minimal") {
             setBackgroundLoaded(false);
         }
-    }, [backgroundType]);
+    }, [backgroundType, currentBackground, backgroundLoaded]);
 
     // Listen for background changes from settings
     useEffect(() => {
@@ -149,6 +159,8 @@ export function App() {
                                 muted
                                 playsInline
                                 className="h-full w-full object-cover"
+                                onLoadedData={() => setBackgroundLoaded(true)}
+                                onCanPlay={() => setBackgroundLoaded(true)}
                                 onCanPlayThrough={() => setBackgroundLoaded(true)}
                             >
                                 <source src={currentBackground.url} type="video/mp4" />
@@ -168,7 +180,7 @@ export function App() {
             </div>
             <ScrollArea className="h-screen w-screen">
                 <div 
-                    className="mx-auto text-foreground flex min-h-screen flex-col items-center justify-center p-4 w-3xl transition-transform duration-300 ease-in-out"
+                    className="mx-auto text-foreground flex min-h-screen flex-col items-center justify-center p-4 pt-32 w-3xl transition-transform duration-300 ease-in-out"
                     style={{ transform: getTransform() }}
                 >
                     <Chatbox />

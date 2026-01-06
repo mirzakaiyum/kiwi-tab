@@ -12,7 +12,7 @@ const widgetVariants = cva(
         lg: "size-96",
       },
       design: {
-        default: "p-6",
+        default: "p-4",
         tight: "p-4",
       },
       variant: {

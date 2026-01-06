@@ -3,6 +3,7 @@ import { Settings, CircleHelp, MonitorCog, Sun, MoonStar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
 import {
     Drawer,
     DrawerClose,
@@ -43,6 +44,7 @@ export function SettingsButton() {
         (localStorage.getItem(BACKGROUND_FREQUENCY_KEY) as BackgroundFrequency) || "never"
     );
 
+
     // Persist greeting changes
     useEffect(() => {
         if (customGreeting) {
@@ -78,6 +80,8 @@ export function SettingsButton() {
         // Dispatch event so App can update background shuffle
         window.dispatchEvent(new Event("kiwi-background-changed"));
     }, [backgroundFrequency]);
+
+
 
     return (
         <TooltipProvider>
@@ -197,6 +201,8 @@ export function SettingsButton() {
                                     </div>
                                 </div>
 
+
+
                                 {/* Background */}
                                 <div className="space-y-2">
                                     <h3 className="text-xs opacity-50 uppercase tracking-widest">Background</h3>
@@ -262,7 +268,7 @@ export function SettingsButton() {
                                 </div>
                                 {/* Acknowledgment */}
                                 <div className="text-center pt-4 space-y-1">
-                                    <p className="text-xs text-muted-foreground/60">Kiwi Tab v0.0.1-alpha</p>
+                                    <p className="text-xs text-muted-foreground/60">Kiwi Tab v0.0.2-alpha</p>
                                     <p className="text-xs text-muted-foreground/60">Made with ❤️ in Bangladesh!</p>
                                     <p className="text-xs text-muted-foreground/60">By Kaiyum Mirza.</p>
                                 </div>

@@ -1,7 +1,9 @@
 import { Widget, WidgetContent } from "@/components/ui/widget";
 import { Label } from "@/components/ui/label";
+import { lazy } from "react";
+import { registerWidget } from "@/lib/widgets/registry";
 
-export default function WidgetDemo() {
+export default function CalendarWidget() {
   const now = new Date();
 
   const day = now.toLocaleDateString("en-US", { weekday: "short" });
@@ -21,3 +23,16 @@ export default function WidgetDemo() {
     </Widget>
   );
 }
+
+// Self-registration
+registerWidget({
+  metadata: {
+    id: "calendar",
+    name: "Calendar",
+    description: "Display current date",
+    defaultVariant: "compact",
+    hasSettings: false,
+  },
+  component: CalendarWidget,
+  componentLazy: lazy(() => import("./calendar")),
+});

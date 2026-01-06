@@ -1,8 +1,11 @@
 "use client";
 
 import * as React from "react";
+import { lazy } from "react";
 import { Widget, WidgetContent } from "@/components/ui/widget";
 import { Label } from "@/components/ui/label";
+import { registerWidget } from "@/lib/widgets/registry";
+import type { ClockSettings } from "@/lib/widgets/types";
 
 interface AnalogClockProps {
   timezone?: string;
@@ -56,7 +59,7 @@ export default function AnalogClock({
   return (
     <Widget>
       <WidgetContent className="flex-col gap-5 justify-center items-center">
-        <div className="relative flex items-center justify-center mt-1.5">
+        <div className="relative flex items-center justify-center mt-3">
           {/* Hour markers */}
           {[...Array(12)].map((_, i) => {
             const hour = i + 1;
@@ -105,3 +108,19 @@ export default function AnalogClock({
   );
 }
 
+// Self-registration
+registerWidget<ClockSettings>({
+  metadata: {
+    id: "analogClock",
+    name: "Analog Clock",
+    description: "Display time with analog clock face",
+    defaultVariant: "default",
+    hasSettings: true,
+  },
+  component: AnalogClock,
+  componentLazy: lazy(() => import("./analogClock")),
+  defaultSettings: {
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    useCurrentLocation: true,
+  },
+});

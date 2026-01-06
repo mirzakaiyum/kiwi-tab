@@ -1,41 +1,17 @@
-import { useState, lazy, Suspense } from "react";
+import { useState, Suspense } from "react";
 import { Pencil, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-
-// Lazy-load widget components - only loaded when picker opens
-const Calendar = lazy(() => import("@/components/widgets/calendar"));
-const AnalogClock = lazy(() => import("@/components/widgets/analogClock"));
-
-// Available widget definitions with lazy-loaded components
-interface WidgetDefinition {
-  type: string;
-  name: string;
-  defaultVariant: string;
-  component: React.ReactNode;
-}
-
-const AVAILABLE_WIDGETS: WidgetDefinition[] = [
-  {
-    type: "calendar",
-    name: "Calendar",
-    defaultVariant: "compact",
-    component: <Calendar />,
-  },
-  {
-    type: "analogClock",
-    name: "Analog Clock",
-    defaultVariant: "default",
-    component: <AnalogClock />,
-  },
-];
-
-
+import { getAllWidgets, type WidgetDefinition } from "@/lib/widgets";
 
 export function CustomizeButton() {
   const [open, setOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+
+  // Get all registered widgets from the registry
+  const availableWidgets = getAllWidgets();
 
   const handleOpen = () => {
     setOpen(true);
@@ -57,7 +33,7 @@ export function CustomizeButton() {
 
   const handleAddWidget = (widget: WidgetDefinition) => {
     window.dispatchEvent(
-      new CustomEvent("kiwi-add-widget", { detail: { type: widget.type, variant: widget.defaultVariant } })
+      new CustomEvent("kiwi-add-widget", { detail: { type: widget.metadata.id, variant: widget.metadata.defaultVariant } })
     );
   };
 
@@ -85,31 +61,34 @@ export function CustomizeButton() {
           )}
         >
           <div className="bg-background border border-border rounded-2xl w-3xl shadow-2xl overflow-hidden">
-            <div className="max-h-80 overflow-y-auto p-4">
-              <div className="grid grid-cols-4 gap-2">
-                {AVAILABLE_WIDGETS.map((widget) => (
-                  <div key={widget.type} className="flex flex-col items-center gap-2 scale-80 origin-top-left">
-                    <div className="group relative w-full">
-                      <Suspense fallback={
-                        <div className="w-full aspect-square rounded-xl bg-muted/50 border border-border animate-pulse" />
-                      }>
-                        {widget.component}
-                      </Suspense>
-                      <Button
-                        variant="ghost"
-                        size="icon-xs"
-                        onClick={() => handleAddWidget(widget)}
-                        className="absolute -right-2 -top-2 bg-background rounded-full border border-border backdrop-blur-sm hover:bg-input"
-                      >
-                        <Plus className="size-3" />
-                      </Button>
+            <ScrollArea className="h-64">
+              <div className="grid grid-cols-4 gap-3 p-4">
+                {availableWidgets.map((widget) => {
+                  const LazyComponent = widget.componentLazy;
+                  return (
+                    <div key={widget.metadata.id} className="flex flex-col items-center gap-2">
+                      <div className="group relative w-full transform scale-75 origin-top">
+                        <Suspense fallback={
+                          <div className="w-full aspect-square rounded-xl bg-muted/50 border border-border animate-pulse" />
+                        }>
+                          <LazyComponent />
+                        </Suspense>
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          onClick={() => handleAddWidget(widget)}
+                          className="absolute -right-2 -top-2 bg-background rounded-full border border-border backdrop-blur-sm hover:bg-input"
+                        >
+                          <Plus className="size-3" />
+                        </Button>
+                      </div>
+                      <span className="text-xs text-muted-foreground -mt-6">{widget.metadata.name}</span>
                     </div>
-                    <span className="text-sm text-muted-foreground">{widget.name}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
-            </div>
-            <div className="border-t border-border p-4 flex justify-end">
+            </ScrollArea>
+            <div className="border-t border-border p-3 flex justify-end bg-background">
               <Button size="sm" onClick={handleClose}>Done</Button>
             </div>
           </div>
@@ -127,5 +106,4 @@ export function CustomizeButton() {
   );
 }
 
-export { AVAILABLE_WIDGETS };
 export default CustomizeButton;

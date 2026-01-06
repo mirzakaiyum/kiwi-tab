@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { SuggestDropdown } from "@/components/suggest-dropdown";
-import CreateExpertDialog from "@/components/create-expert-dialog";
+import CreateExpertDialog from "@/components/dialogs/create-expert-dialog";
 import { DEFAULT_EXPERTS, type Expert } from "@/components/default-values";
 
 // Icon mapping for experts

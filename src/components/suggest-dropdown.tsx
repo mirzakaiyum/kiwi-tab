@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Plus, CornerDownLeft, Search, Sparkles, Code, GraduationCap, Heart, Palette, type LucideIcon } from "lucide-react";
-import CreateShortcutDialog from "@/components/create-shortcut-dialog";
+import CreateShortcutDialog from "@/components/dialogs/create-shortcut-dialog";
 import {
     Command,
     CommandGroup,
