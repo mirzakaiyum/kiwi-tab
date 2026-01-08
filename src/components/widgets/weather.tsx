@@ -1,6 +1,6 @@
 import * as React from "react";
 import { lazy } from "react";
-import { CloudIcon, Loader2Icon } from "lucide-react";
+import { CloudIcon } from "lucide-react";
 
 import {
   Widget,
@@ -26,6 +26,7 @@ interface WeatherWidgetProps {
   city?: string;
   unit?: "C" | "F";
   autoDetect?: boolean;
+  preview?: boolean;
 }
 
 async function getCurrentPosition(): Promise<{ lat: number; lon: number }> {
@@ -85,27 +86,34 @@ async function fetchWeather(city: string, unit: "C" | "F" = "C", autoDetect = fa
   };
 }
 
-export default function WeatherWidget({ city = "Dhaka", unit = "C", autoDetect = false }: WeatherWidgetProps) {
+export default function WeatherWidget({ city = "Dhaka", unit = "C", autoDetect = false, preview = false }: WeatherWidgetProps) {
   const [weather, setWeather] = React.useState<WeatherData | null>(null);
-  const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
+  // Dummy data for preview mode
+  const previewData: WeatherData = React.useMemo(() => ({
+    location: "London",
+    temperature: 18,
+    feelsLike: 16,
+    condition: "Partly Cloudy",
+    high: 21,
+    low: 14,
+  }), []);
+
   React.useEffect(() => {
+    // Skip fetching in preview mode
+    if (preview) return;
+
     let mounted = true;
 
     async function loadWeather() {
       try {
-        setLoading(true);
-        setError(null);
-        
         let coords: { lat: number; lon: number } | undefined;
         
         if (autoDetect) {
            try {
-             // Try to get precise location
              coords = await getCurrentPosition();
            } catch {
-             // Fallback to IP-based if geolocation fails/denied
              console.warn("Geolocation failed, falling back to IP");
            }
         }
@@ -113,14 +121,12 @@ export default function WeatherWidget({ city = "Dhaka", unit = "C", autoDetect =
         const data = await fetchWeather(city, unit, autoDetect, coords);
         if (mounted) {
           setWeather(data);
+          setError(null);
         }
       } catch (err) {
-        if (mounted) {
+        // Only set error if we have no cached data
+        if (mounted && !weather) {
           setError(err instanceof Error ? err.message : "Failed to load weather");
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
         }
       }
     }
@@ -134,19 +140,12 @@ export default function WeatherWidget({ city = "Dhaka", unit = "C", autoDetect =
       mounted = false;
       clearInterval(interval);
     };
-  }, [city, unit, autoDetect]);
+  }, [city, unit, autoDetect, preview]);
 
-  if (loading) {
-    return (
-      <Widget>
-        <WidgetContent className="items-center justify-center">
-          <Loader2Icon className="size-6 animate-spin text-muted-foreground" />
-        </WidgetContent>
-      </Widget>
-    );
-  }
+  // Use preview data or fetched data
+  const displayWeather = preview ? previewData : weather;
 
-  if (error || !weather) {
+  if (error || !displayWeather) {
     return (
       <Widget>
         <WidgetHeader className="flex-col gap-3">
@@ -166,21 +165,21 @@ export default function WeatherWidget({ city = "Dhaka", unit = "C", autoDetect =
       <WidgetHeader className="flex-col gap-3">
         <div className="flex justify-between w-full">
           <div className="flex flex-col gap-x-2">
-            <Label className="font-light text-xs">{weather.location}</Label>
-            <Label className="text-4xl font-light">{weather.temperature}&deg;</Label>
+            <Label className="font-light text-xs">{displayWeather.location}</Label>
+            <Label className="text-4xl font-light">{displayWeather.temperature}&deg;</Label>
           </div>
           <Label className="text-xs text-muted-foreground text-end">
-            Feels Like <br/>{weather.feelsLike}&deg;
+            Feels Like <br/>{displayWeather.feelsLike}&deg;
           </Label>
         </div>
       </WidgetHeader>
       <WidgetContent className="items-end">
         <div className="flex w-full flex-col gap-1">
           <CloudIcon className="size-5" />
-          <Label className="font-light">{weather.condition}</Label>
+          <Label className="font-light">{displayWeather.condition}</Label>
           <div className="flex h-max w-full items-center gap-2 justify-start text-xs text-muted-foreground">
-            <span>H:{weather.high}&deg;</span>
-            <span>L:{weather.low}&deg;</span>
+            <span>H:{displayWeather.high}&deg;</span>
+            <span>L:{displayWeather.low}&deg;</span>
           </div>
         </div>
       </WidgetContent>

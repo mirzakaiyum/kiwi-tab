@@ -51,3 +51,10 @@ export interface WeatherSettings {
   unit: "C" | "F";
   autoDetect?: boolean;
 }
+
+// Sports-specific settings
+export interface SportsSettings {
+  sport: string;
+  league?: string;
+  team?: string;
+}

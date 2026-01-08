@@ -1,26 +1,33 @@
 import { useState, useEffect } from "react";
-import { Settings, CircleHelp, MonitorCog, Sun, MoonStar } from "lucide-react";
+import { Settings, CircleHelp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 import {
-    Drawer,
-    DrawerClose,
-    DrawerContent,
-    DrawerDescription,
-    DrawerFooter,
-    DrawerHeader,
-    DrawerTitle,
-    DrawerTrigger,
-} from "@/components/ui/drawer";
+    Sheet,
+    SheetClose,
+    SheetContent,
+    SheetDescription,
+    SheetFooter,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from "@/components/ui/sheet";
 import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useTheme } from "@/components/theme-provider";
+
 
 const GREETING_STORAGE_KEY = "kiwi-greeting";
 const NAME_STORAGE_KEY = "kiwi-name";
@@ -30,15 +37,14 @@ const BACKGROUND_FREQUENCY_KEY = "kiwi-background-frequency";
 type BackgroundFrequency = "1hour" | "1day" | "1week" | "never";
 
 export function SettingsButton() {
-    const { theme, setTheme } = useTheme();
     const [customGreeting, setCustomGreeting] = useState(() => 
         localStorage.getItem(GREETING_STORAGE_KEY) || ""
     );
     const [customName, setCustomName] = useState(() => 
         localStorage.getItem(NAME_STORAGE_KEY) || ""
     );
-    const [backgroundType, setBackgroundType] = useState<"minimal" | "alive">(() => 
-        (localStorage.getItem(BACKGROUND_TYPE_KEY) as "minimal" | "alive") || "minimal"
+    const [backgroundType, setBackgroundType] = useState<"none" | "images" | "videos">(() => 
+        (localStorage.getItem(BACKGROUND_TYPE_KEY) as "none" | "images" | "videos") || "videos"
     );
     const [backgroundFrequency, setBackgroundFrequency] = useState<BackgroundFrequency>(() => 
         (localStorage.getItem(BACKGROUND_FREQUENCY_KEY) as BackgroundFrequency) || "never"
@@ -85,8 +91,8 @@ export function SettingsButton() {
 
     return (
         <TooltipProvider>
-            <Drawer direction="right">
-                <DrawerTrigger asChild>
+            <Sheet modal={false}>
+                <SheetTrigger asChild>
                     <Button
                         variant="ghost"
                         size="icon"
@@ -95,14 +101,14 @@ export function SettingsButton() {
                         <Settings className="size-3" />
                         <span className="sr-only">Settings</span>
                     </Button>
-                </DrawerTrigger>
-                <DrawerContent className="flex flex-col max-h-screen">
-                            <DrawerHeader>
-                                <DrawerTitle>Settings</DrawerTitle>
-                                <DrawerDescription>
-                                    Customize your Kiwi Tab experience.
-                                </DrawerDescription>
-                            </DrawerHeader>
+                </SheetTrigger>
+                <SheetContent side="right" className="flex flex-col overflow-hidden">
+                    <SheetHeader>
+                        <SheetTitle>Settings</SheetTitle>
+                        <SheetDescription>
+                            Customize your Kiwi Tab experience.
+                        </SheetDescription>
+                    </SheetHeader>
                             
                             <div className="p-4 space-y-6 overflow-y-auto flex-1">
                                 {/* General */}
@@ -113,42 +119,6 @@ export function SettingsButton() {
                                         <div className="flex items-center justify-between p-3">
                                             <span className="text-sm">Language</span>
                                             <span className="text-sm px-3 py-1.5 rounded-md bg-background text-muted-foreground">English</span>
-                                        </div>
-
-                                        {/* Theme */}
-                                        <div className="flex items-center justify-between p-3">
-                                            <span className="text-sm">Dark mode</span>
-                                            <div className="bg-background inline-flex items-center overflow-hidden rounded-md p-0.5">
-                                                {[
-                                                    { icon: "monitor", value: "system" as const, label: "System" },
-                                                    { icon: "sun", value: "light" as const, label: "Light" },
-                                                    { icon: "moon", value: "dark" as const, label: "Dark" },
-                                                ].map((option) => {
-                                                    // Disable non-dark themes when Alive background is selected
-                                                    const isDisabled = backgroundType === "alive" && option.value !== "dark";
-                                                    return (
-                                                        <button
-                                                            key={option.value}
-                                                            disabled={isDisabled}
-                                                            className={cn(
-                                                                "relative flex items-center gap-1.5 px-2.5 py-1 text-xs rounded transition-all",
-                                                                isDisabled
-                                                                    ? "opacity-40 cursor-not-allowed"
-                                                                    : "cursor-pointer",
-                                                                theme === option.value
-                                                                    ? "text-foreground bg-muted border"
-                                                                    : "text-muted-foreground border border-transparent hover:text-foreground"
-                                                            )}
-                                                            onClick={() => !isDisabled && setTheme(option.value)}
-                                                            aria-label={`Switch to ${option.value} theme`}
-                                                        >
-                                                            {option.icon === "monitor" && <MonitorCog className="size-3" />}
-                                                            {option.icon === "sun" && <Sun className="size-3" />}
-                                                            {option.icon === "moon" && <MoonStar className="size-3" />}
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -210,37 +180,27 @@ export function SettingsButton() {
                                         {/* Background Type */}
                                         <div className="flex items-center justify-between p-3">
                                             <span className="text-sm">Background type</span>
-                                            <div className="bg-background inline-flex items-center overflow-hidden rounded-md p-0.5">
-                                                {[
-                                                    { value: "minimal" as const, label: "Minimal" },
-                                                    { value: "alive" as const, label: "Alive" },
-                                                ].map((option) => (
-                                                    <button
-                                                        key={option.value}
-                                                        className={cn(
-                                                            "relative flex items-center gap-1.5 px-2.5 py-1 text-xs cursor-pointer rounded transition-all",
-                                                            backgroundType === option.value
-                                                                ? "text-foreground bg-muted border"
-                                                                : "text-muted-foreground border border-transparent hover:text-foreground"
-                                                        )}
-                                                        onClick={() => {
-                                                            setBackgroundType(option.value);
-                                                            // Alive mode requires dark theme
-                                                            if (option.value === "alive") {
-                                                                setTheme("dark");
-                                                            }
-                                                        }}
-                                                    >
-                                                        {option.label}
-                                                    </button>
-                                                ))}
-                                            </div>
+                                            <Select
+                                                value={backgroundType}
+                                                onValueChange={(v) => setBackgroundType(v as "none" | "images" | "videos")}
+                                            >
+                                                <SelectTrigger className="w-32 h-8 text-xs bg-background">
+                                                    <SelectValue>
+                                                        {backgroundType === "none" ? "None" : backgroundType === "images" ? "Images" : "Videos"}
+                                                    </SelectValue>
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="none">None</SelectItem>
+                                                    <SelectItem value="images">Images</SelectItem>
+                                                    <SelectItem value="videos">Videos</SelectItem>
+                                                </SelectContent>
+                                            </Select>
                                         </div>
 
-                                        {/* Frequency - only show when Alive is selected */}
-                                        {backgroundType === "alive" && (
+                                        {/* Frequency - only show when Images or Videos is selected */}
+                                        {(backgroundType === "images" || backgroundType === "videos") && (
                                             <div className="flex items-center justify-between p-3">
-                                                <span className="text-sm">Frequency</span>
+                                                <span className="text-sm">Shuffle</span>
                                                 <div className="bg-background inline-flex items-center overflow-hidden rounded-md p-0.5">
                                                     {[
                                                         { value: "1hour" as const, label: "1h" },
@@ -268,19 +228,30 @@ export function SettingsButton() {
                                 </div>
                                 {/* Acknowledgment */}
                                 <div className="text-center pt-4 space-y-1">
-                                    <p className="text-xs text-muted-foreground/60">Kiwi Tab v0.0.2-alpha</p>
+                                    <p className="text-xs text-muted-foreground/60">Kiwi Tab v{__APP_VERSION__}</p>
                                     <p className="text-xs text-muted-foreground/60">Made with ❤️ in Bangladesh!</p>
                                     <p className="text-xs text-muted-foreground/60">By Kaiyum Mirza.</p>
+                                    <button
+                                        onClick={() => {
+                                            if (confirm("This will reset all settings and reload the page. Continue?")) {
+                                                localStorage.clear();
+                                                window.location.reload();
+                                            }
+                                        }}
+                                        className="text-xs text-primary hover:text-foreground mt-2 cursor-pointer"
+                                    >
+                                        Reset Settings
+                                    </button>
                                 </div>
                             </div>
 
-                            <DrawerFooter>
-                                <DrawerClose asChild>
-                                    <Button variant="outline">Close</Button>
-                                </DrawerClose>
-                            </DrawerFooter>
-                </DrawerContent>
-            </Drawer>
+                    <SheetFooter>
+                        <SheetClose asChild>
+                            <Button variant="outline">Close</Button>
+                        </SheetClose>
+                    </SheetFooter>
+                </SheetContent>
+            </Sheet>
         </TooltipProvider>
     );
 }

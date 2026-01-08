@@ -18,8 +18,8 @@ type BackgroundFrequency = "1hour" | "1day" | "1week" | "never";
 
 // Background media options
 const ALIVE_BACKGROUNDS = [
-    { type: "video", url: "https://videos.pexels.com/video-files/35037587/14842032_1920_1080_25fps.mp4" },
-    { type: "image", url: "https://images.pexels.com/photos/1350197/pexels-photo-1350197.jpeg?cs=srgb&dl=pexels-earano-1350197.jpg&fm=jpg&w=1920&h=1271" },
+    { type: "video" as const, url: "https://videos.pexels.com/video-files/35037587/14842032_1920_1080_25fps.mp4" },
+    { type: "image" as const, url: "https://images.pexels.com/photos/1350197/pexels-photo-1350197.jpeg?cs=srgb&dl=pexels-earano-1350197.jpg&fm=jpg&w=1920&h=1271" },
 ];
 
 // Get frequency duration in milliseconds
@@ -51,16 +51,17 @@ function getBackgroundIndex(): number {
 }
 
 export function App() {
-    const [backgroundType, setBackgroundType] = useState<"minimal" | "alive">(() => 
-        (localStorage.getItem(BACKGROUND_TYPE_KEY) as "minimal" | "alive") || "minimal"
+    const [backgroundType, setBackgroundType] = useState<"none" | "images" | "videos">(() => 
+        (localStorage.getItem(BACKGROUND_TYPE_KEY) as "none" | "images" | "videos") || "videos"
     );
     const [currentBackground, setCurrentBackground] = useState(() => 
         ALIVE_BACKGROUNDS[getBackgroundIndex()]
     );
-    // Start with background visible if already set to "alive" to prevent flash
-    const [backgroundLoaded, setBackgroundLoaded] = useState(() => 
-        (localStorage.getItem(BACKGROUND_TYPE_KEY) as "minimal" | "alive") === "alive"
-    );
+    // Start with background visible if already set to show background to prevent flash
+    const [backgroundLoaded, setBackgroundLoaded] = useState(() => {
+        const stored = localStorage.getItem(BACKGROUND_TYPE_KEY);
+        return stored === "images" || stored === "videos";
+    });
     const [pickerOpen, setPickerOpen] = useState(false);
     const [widgetCount, setWidgetCount] = useState(() => {
         try {
@@ -73,14 +74,14 @@ export function App() {
 
     // Handle background loading with fallback timer
     useEffect(() => {
-        if (backgroundType === "alive" && !backgroundLoaded) {
+        if ((backgroundType === "images" || backgroundType === "videos") && !backgroundLoaded) {
             // Fallback: show background after 2 seconds even if load event doesn't fire
             const fallbackTimer = setTimeout(() => {
                 setBackgroundLoaded(true);
             }, 2000);
             return () => clearTimeout(fallbackTimer);
         }
-        if (backgroundType === "minimal") {
+        if (backgroundType === "none") {
             setBackgroundLoaded(false);
         }
     }, [backgroundType, currentBackground, backgroundLoaded]);
@@ -88,7 +89,7 @@ export function App() {
     // Listen for background changes from settings
     useEffect(() => {
         const handleBackgroundChange = () => {
-            const type = (localStorage.getItem(BACKGROUND_TYPE_KEY) as "minimal" | "alive") || "minimal";
+            const type = (localStorage.getItem(BACKGROUND_TYPE_KEY) as "none" | "images" | "videos") || "videos";
             setBackgroundType(type);
             // Also update the current background in case frequency changed
             setCurrentBackground(ALIVE_BACKGROUNDS[getBackgroundIndex()]);
@@ -145,10 +146,10 @@ export function App() {
     };
 
     return (
-        <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+        <ThemeProvider>
             {/* Background layer */}
             <div className="fixed inset-0 -z-10 bg-background">
-                {backgroundType === "alive" && (
+                {(backgroundType === "images" || backgroundType === "videos") && (
                     <div 
                         className={`h-full w-full transition-opacity duration-700 ${backgroundLoaded ? "opacity-100" : "opacity-0"}`}
                     >
@@ -180,7 +181,7 @@ export function App() {
             </div>
             <ScrollArea className="h-screen w-screen">
                 <div 
-                    className="mx-auto text-foreground flex min-h-screen flex-col items-center justify-center p-4 pt-32 w-3xl transition-transform duration-300 ease-in-out"
+                    className="mx-auto text-foreground flex flex-col items-center justify-center px-4 pt-32 w-3xl transition-transform duration-300 ease-in-out"
                     style={{ transform: getTransform() }}
                 >
                     <Chatbox />

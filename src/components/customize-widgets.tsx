@@ -71,7 +71,7 @@ export function CustomizeButton() {
                         <Suspense fallback={
                           <div className="w-full aspect-square rounded-xl bg-muted/50 border border-border animate-pulse" />
                         }>
-                          <LazyComponent />
+                          <LazyComponent preview />
                         </Suspense>
                         <Button
                           variant="ghost"
@@ -88,7 +88,8 @@ export function CustomizeButton() {
                 })}
               </div>
             </ScrollArea>
-            <div className="border-t border-border p-3 flex justify-end bg-background">
+            <div className="border-t border-border p-4 flex items-center justify-between bg-background">
+              <div className="text-sm text-muted-foreground">Max 8 widgets can be added</div>
               <Button size="sm" onClick={handleClose}>Done</Button>
             </div>
           </div>

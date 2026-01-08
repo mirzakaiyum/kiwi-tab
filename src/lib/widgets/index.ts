@@ -7,6 +7,7 @@ export type {
   ClockSettings,
   DualClockSettings,
   WeatherSettings,
+  SportsSettings,
 } from "./types";
 
 // Re-export registry functions
@@ -31,10 +32,12 @@ export {
   getWidgetSettings,
 } from "./settings-manager";
 
-// Import all widgets to trigger their registration
 // This file serves as the entry point that initializes the widget system
 import "@/components/widgets/calendar";
 import "@/components/widgets/analogClock";
+import "@/components/widgets/digitalClock";
 import "@/components/widgets/dualClock";
 import "@/components/widgets/timer";
 import "@/components/widgets/weather";
+import "@/components/widgets/sports";
+import "@/components/widgets/stickyNote";

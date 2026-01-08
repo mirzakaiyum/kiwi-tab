@@ -20,7 +20,8 @@ import { SortableWidget } from "@/components/sortable-widget";
 import { ClockSettingsDialog, type ClockSettings } from "@/components/dialogs/clock-settings-dialog";
 import { DualClockSettingsDialog, type DualClockSettings } from "@/components/dialogs/dual-clock-settings-dialog";
 import { WeatherSettingsDialog } from "@/components/dialogs/weather-settings-dialog";
-import type { WeatherSettings } from "@/lib/widgets/types";
+import { SportsSettingsDialog } from "@/components/dialogs/sports-settings-dialog";
+import type { WeatherSettings, SportsSettings } from "@/lib/widgets/types";
 import {
   getWidget,
   getWidgetComponent,
@@ -32,17 +33,13 @@ import {
   removeWidget,
   type WidgetInstance,
 } from "@/lib/widgets";
-
-// Default widgets configuration
-const DEFAULT_WIDGETS: WidgetInstance[] = [
-  { id: "calendar-1", type: "calendar", variant: "compact" },
-  { id: "calendar-2", type: "calendar", variant: "compact" },
-  { id: "calendar-3", type: "calendar", variant: "compact" },
-  { id: "calendar-4", type: "calendar", variant: "compact" },
-];
+import { DEFAULT_WIDGETS } from "@/lib/widgets/defaults";
 
 function getWidgetProps(widget: WidgetInstance): Record<string, unknown> {
-  const props: Record<string, unknown> = { variant: widget.variant };
+  const props: Record<string, unknown> = { 
+    variant: widget.variant,
+    instanceId: widget.id,
+  };
   
   // Spread settings into props
   if (widget.settings) {
@@ -52,12 +49,14 @@ function getWidgetProps(widget: WidgetInstance): Record<string, unknown> {
   return props;
 }
 
+const MAX_WIDGETS = 8;
+
 interface WidgetGridProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 const WidgetGrid = React.forwardRef<HTMLDivElement, WidgetGridProps>(
   ({ className, ...props }, ref) => {
     const [widgets, setWidgets] = React.useState<WidgetInstance[]>(() => 
-      loadWidgets(DEFAULT_WIDGETS)
+      loadWidgets(DEFAULT_WIDGETS).slice(0, MAX_WIDGETS)
     );
     const [settingsWidgetId, setSettingsWidgetId] = React.useState<string | null>(null);
 
@@ -98,9 +97,14 @@ const WidgetGrid = React.forwardRef<HTMLDivElement, WidgetGridProps>(
     // Listen for add widget events from settings panel
     React.useEffect(() => {
       const handleAddWidget = (e: CustomEvent<{ type: string; variant: string }>) => {
-        const { type, variant } = e.detail;
-        const newWidget = createWidgetInstance(type, variant);
-        setWidgets((prev) => [...prev, newWidget]);
+        setWidgets((prev) => {
+          // Max widgets allowed
+          if (prev.length >= MAX_WIDGETS) return prev;
+          
+          const { type, variant } = e.detail;
+          const newWidget = createWidgetInstance(type, variant);
+          return [...prev, newWidget];
+        });
       };
 
       window.addEventListener("kiwi-add-widget", handleAddWidget as EventListener);
@@ -132,6 +136,11 @@ const WidgetGrid = React.forwardRef<HTMLDivElement, WidgetGridProps>(
       setSettingsWidgetId(null);
     };
 
+    const handleSaveSportsSettings = (settings: SportsSettings) => {
+      setWidgets((prev) => updateWidgetSettings(prev, settingsWidgetId!, settings));
+      setSettingsWidgetId(null);
+    };
+
     // Get default settings for dialogs
     const defaultClockSettings: ClockSettings = (getWidgetDefaultSettings("analogClock") as unknown as ClockSettings) || {
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -149,9 +158,14 @@ const WidgetGrid = React.forwardRef<HTMLDivElement, WidgetGridProps>(
       autoDetect: false,
     };
 
+    const defaultSportsSettings: SportsSettings = (getWidgetDefaultSettings("sports") as unknown as SportsSettings) || {
+      sport: "cricket",
+      league: "international",
+    };
+
     const gridClassName = cn(
       "w-full grid grid-cols-2 gap-3 md:grid-cols-4 transition-all duration-300 ease-in-out",
-      widgets.length > 0 && "py-8",
+      widgets.length > 0 && "pt-8",
       className
     );
 
@@ -191,9 +205,9 @@ const WidgetGrid = React.forwardRef<HTMLDivElement, WidgetGridProps>(
           </SortableContext>
         </DndContext>
 
-        {/* Clock Settings Dialog */}
+        {/* Clock Settings Dialog (for both analog and digital clocks) */}
         <ClockSettingsDialog
-          open={settingsWidgetId !== null && settingsWidget?.type === "analogClock"}
+          open={settingsWidgetId !== null && (settingsWidget?.type === "analogClock" || settingsWidget?.type === "digitalClock")}
           onOpenChange={(open) => !open && setSettingsWidgetId(null)}
           settings={(settingsWidget?.settings as unknown as ClockSettings) || defaultClockSettings}
           onSave={handleSaveClockSettings}
@@ -213,6 +227,14 @@ const WidgetGrid = React.forwardRef<HTMLDivElement, WidgetGridProps>(
           onOpenChange={(open) => !open && setSettingsWidgetId(null)}
           settings={(settingsWidget?.settings as unknown as WeatherSettings) || defaultWeatherSettings}
           onSave={handleSaveWeatherSettings}
+        />
+
+        {/* Sports Settings Dialog */}
+        <SportsSettingsDialog
+          open={settingsWidgetId !== null && settingsWidget?.type === "sports"}
+          onOpenChange={(open) => !open && setSettingsWidgetId(null)}
+          settings={(settingsWidget?.settings as unknown as SportsSettings) || defaultSportsSettings}
+          onSave={handleSaveSportsSettings}
         />
       </>
     );
