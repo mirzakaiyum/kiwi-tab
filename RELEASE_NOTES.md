@@ -43,7 +43,3 @@
 - Fixed widget picker not respecting max widget limit
 - Fixed keyboard input issues in sticky notes
 - Improved overall performance with lazy loading
-
----
-
-**Full Changelog**: https://github.com/MakFissh/kiwi-tab/compare/v0.0.2...v0.0.3
