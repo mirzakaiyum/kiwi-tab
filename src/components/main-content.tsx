@@ -1,4 +1,5 @@
-import { useState, useEffect, ReactNode } from "react";
+import { useState, useEffect } from "react";
+import type { ReactNode } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface MainContentProps {
@@ -61,7 +62,7 @@ export function MainContent({ children }: MainContentProps) {
     return (
         <ScrollArea className="h-screen w-screen">
             <div 
-                className="mx-auto text-foreground flex flex-col items-center justify-center px-4 pt-32 w-3xl transition-transform duration-300 ease-in-out"
+                className="mx-auto text-foreground flex flex-col items-center justify-center px-4 pt-24 w-3xl transition-transform duration-300 ease-in-out"
                 style={{ transform: getTransform() }}
             >
                 {children}

@@ -13,13 +13,22 @@
     "storage"
   ],
 
+  "background": {
+    "service_worker": "background.js"
+  },
+
   "host_permissions": [
     "https://suggestqueries.google.com/*",
     "https://api.duckduckgo.com/*",
     "https://en.wikipedia.org/*",
     "https://chatgpt.com/*",
     "https://www.perplexity.ai/*",
-    "https://gemini.google.com/*"
+    "https://gemini.google.com/*",
+    "https://static.cricinfo.com/*",
+    "https://site.api.espn.com/*",
+    "https://api.aladhan.com/*",
+    "https://aladhan.api.islamic.network/*",
+    "https://aladhan.api.alislam.ru/*"
   ],
 
   "icons": {

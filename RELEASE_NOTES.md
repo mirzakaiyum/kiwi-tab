@@ -1,16 +1,15 @@
-# Release Notes - v0.0.3
+# Release Notes - v0.0.4
 
 ## 🎉 What's New
 
 ### New Widgets
 
-- **Sports Widget** - Live sports scores with support for cricket, soccer, and
-  more
-- **Sticky Notes Widget** - Create multiple sticky notes with unique content per
-  instance
-- **Timer Widget** - Countdown timer for productivity
-- **Dual Clock Widget** - Display two time zones simultaneously
-- **Weather Widget** - Real-time weather with auto-detect location support
+- **Soluna Widget** - Prayer times, sunrise/sunset, and moon phases with three
+  display modes:
+  - **Prayer Mode** - Current prayer with countdown to next, radial progress
+    chart, and prayer-specific icons
+  - **Sun Mode** - Sunrise and sunset times with daylight duration
+  - **Moon Mode** - Current moon phase with emoji icon
 
 ### Background Improvements
 
@@ -21,8 +20,6 @@
 ### Sports Widget Enhancements
 
 - 🔴 Live indicator for ongoing matches
-- Improved cricket score display for multi-innings (e.g., "343 & 384/4" now
-  shows clearly)
 - Team filtering support
 - Auto-refresh every minute
 
@@ -35,11 +32,5 @@
 
 ## 🗑️ Removed
 
-- Theme changer (simplified to dark mode only for now)
+- Removed cricket and in-house API fetches in favor of proxies
 
-## 🐛 Bug Fixes
-
-- Fixed extra spacing under widget grid
-- Fixed widget picker not respecting max widget limit
-- Fixed keyboard input issues in sticky notes
-- Improved overall performance with lazy loading

@@ -58,3 +58,16 @@ export interface SportsSettings {
   league?: string;
   team?: string;
 }
+
+// Soluna display modes
+export type SolunaDisplayMode = "sun" | "moon" | "prayer";
+
+// Soluna-specific settings (prayer times, sun/moon)
+export interface SolunaSettings {
+  displayMode: SolunaDisplayMode;
+  location: string;
+  autoDetect?: boolean;
+  calculationMethod?: string;
+}
+
+

@@ -1,0 +1,3 @@
+[submodule "src/lib/kiwi-sports"]
+	path = src/lib/kiwi-sports
+	url = https://github.com/mirzakaiyum/kiwi-sports.git

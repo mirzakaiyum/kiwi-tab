@@ -6,8 +6,9 @@
   </a>
 </h1>
 
-Kiwi Tab is a modern, minimalist home page for your browser. <br>
-Designed to keep your workspace clean while providing powerful tools at your fingertips. Here's some features:
+Kiwi Tab is a modern, minimalist home page for your browser. <br> Designed to
+keep your workspace clean while providing powerful tools at your fingertips.
+Here's some features:
 
 - 🛡️ Privacy focused: No tracking, no data collection.
 - ⚡ Fast & lightweight!
@@ -15,7 +16,9 @@ Designed to keep your workspace clean while providing powerful tools at your fin
 - 🤖 Custom Experts: Choose specialized AI personas for your queries.
 - 🕰️ Analog clock widget with timezone settings.
 - 🗓️ Integrated Calendar.
-- 🖼️ Dynamic & static backgrounds: Including support for "Alive" video wallpapers.
+- 🌙 Soluna widget: Prayer times, sunrise/sunset, and moon phases.
+- 🖼️ Dynamic & static backgrounds: Including support for "Alive" video
+  wallpapers.
 - 🌘 System-aware Dark mode.
 - 🔗 Quick Links for your favorite shortcuts.
 - 🧑‍🎨 Custom CSS & Theme support via Tailwind.
@@ -26,15 +29,18 @@ Designed to keep your workspace clean while providing powerful tools at your fin
 
 Kiwi Tab is built to run on Chromium-based browsers.
 
-[<img src="https://labels.tahoe.be/chrome_download_dark.svg" height="53" alt="Download Kiwi Tab for Chrome">](https://github.com/MakFissh/kiwi-tab/releases) [<img src="https://labels.tahoe.be/edge_download_dark.svg" height="53" alt="Download Kiwi Tab for Edge">](https://github.com/MakFissh/kiwi-tab/releases)
+[<img src="https://labels.tahoe.be/chrome_download_dark.svg" height="53" alt="Download Kiwi Tab for Chrome">](https://github.com/MakFissh/kiwi-tab/releases)
+[<img src="https://labels.tahoe.be/edge_download_dark.svg" height="53" alt="Download Kiwi Tab for Edge">](https://github.com/MakFissh/kiwi-tab/releases)
 
-*Manual installation: Download the zip from releases, enable "Developer mode" in extensions, and "Load unpacked".*
+_Manual installation: Download the zip from releases, enable "Developer mode" in
+extensions, and "Load unpacked"._
 
 <br>
 
 ## 👋 Get in touch
 
-Suggest ideas or report bugs in our [GitHub Issues](https://github.com/MakFissh/kiwi-tab/issues).
+Suggest ideas or report bugs in our
+[GitHub Issues](https://github.com/MakFissh/kiwi-tab/issues).
 
 <br>
 

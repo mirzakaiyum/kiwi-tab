@@ -41,3 +41,4 @@ import "@/components/widgets/timer";
 import "@/components/widgets/weather";
 import "@/components/widgets/sports";
 import "@/components/widgets/stickyNote";
+import "@/components/widgets/soluna";

@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -20,10 +19,37 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxChips,
+  ComboboxChip,
+  ComboboxChipsInput,
+  ComboboxEmpty,
+} from "@/components/ui/combobox";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  horizontalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import type { SportsSettings } from "@/lib/widgets/types";
+import { getSports, getTeams } from "@/lib/services/sports";
 
-// API Response Types
+// Types for local service
 interface LeagueOption {
   name: string;
   league: string;
@@ -50,6 +76,41 @@ interface SportsSettingsDialogProps {
   onSave: (settings: SportsSettings) => void;
 }
 
+function SortableTeamChip({
+  id,
+  children,
+}: {
+  id: string;
+  children: React.ReactNode;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <ComboboxChip
+      ref={setNodeRef}
+      style={style}
+      showRemove={false}
+      className={isDragging ? "opacity-50 z-50 cursor-grabbing" : "cursor-grab"}
+      {...attributes}
+      {...listeners}
+    >
+      {children}
+    </ComboboxChip>
+  );
+}
+
 export function SportsSettingsDialog({
   open,
   onOpenChange,
@@ -63,16 +124,32 @@ export function SportsSettingsDialog({
   // Form state
   const [sport, setSport] = React.useState("");
   const [league, setLeague] = React.useState("");
-  const [specificTeam, setSpecificTeam] = React.useState(false);
-  const [teamInput, setTeamInput] = React.useState("");
+  const [teamIds, setTeamIds] = React.useState<string[]>([]);
+  const [inputValue, setInputValue] = React.useState("");
   
   // Teams state
   const [availableTeams, setAvailableTeams] = React.useState<TeamOption[]>([]);
   const [loadingTeams, setLoadingTeams] = React.useState(false);
-  const [showDropdown, setShowDropdown] = React.useState(false);
-  
-  const inputRef = React.useRef<HTMLInputElement>(null);
-  const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  // DnD Sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setTeamIds((items) => {
+        const oldIndex = items.indexOf(active.id.toString());
+        const newIndex = items.indexOf(over.id.toString());
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
 
   // Get current sport's leagues
   const currentLeagues = React.useMemo(() => {
@@ -90,39 +167,37 @@ export function SportsSettingsDialog({
     return currentLeagues.find((l) => l.league === leagueId)?.name || leagueId;
   };
 
-  // Filter teams based on input
+  // Get display name for team
+  const getTeamName = (teamId: string) => {
+    const t = availableTeams.find((t) => t.id === teamId);
+    return t ? t.name : teamId;
+  };
+
+  // Filter teams based on input (Combobox filtering)
   const filteredTeams = React.useMemo(() => {
-    if (!teamInput.trim()) return availableTeams;
-    const search = teamInput.toLowerCase();
+    if (!inputValue.trim()) return availableTeams;
+    const search = inputValue.toLowerCase();
     return availableTeams.filter(
       (t) =>
         t.name.toLowerCase().includes(search) ||
         t.abbrev.toLowerCase().includes(search)
     );
-  }, [availableTeams, teamInput]);
+  }, [availableTeams, inputValue]);
 
-  // Fetch sports data when dialog opens
+  // Load sports data from local service when dialog opens
   React.useEffect(() => {
     if (!open) return;
 
-    async function fetchSports() {
-      setLoadingSports(true);
-      try {
-        const response = await fetch(
-          "https://kiwi-sports.makfissh.workers.dev/api/sports"
-        );
-        if (response.ok) {
-          const data: SportOption[] = await response.json();
-          setSportsData(data);
-        }
-      } catch {
-        console.error("Failed to fetch sports");
-      } finally {
-        setLoadingSports(false);
-      }
+    setLoadingSports(true);
+    try {
+      // Using local service - synchronous call
+      const data = getSports();
+      setSportsData(data as SportOption[]);
+    } catch {
+      console.error("Failed to load sports");
+    } finally {
+      setLoadingSports(false);
     }
-
-    fetchSports();
   }, [open]);
 
   // Initialize form when dialog opens or settings change
@@ -132,15 +207,20 @@ export function SportsSettingsDialog({
     // Set form values from settings
     setSport(settings.sport || "");
     setLeague(settings.league || "");
-    setSpecificTeam(!!settings.team);
-    setTeamInput(settings.team || "");
+    
+    // Initialize teams (comma separated string -> array)
+    if (settings.team) {
+      setTeamIds(settings.team.split(",").map(t => t.trim()).filter(Boolean));
+    } else {
+      setTeamIds([]);
+    }
+    setInputValue("");
   }, [open, settings]);
 
-  // Set default sport/league when sports data loads (only if not already set from settings)
+  // Set default sport/league when sports data loads
   React.useEffect(() => {
     if (sportsData.length === 0) return;
     
-    // If no sport is set yet, use the first available
     if (!sport && sportsData.length > 0) {
       const firstSport = sportsData[0];
       setSport(firstSport.sport);
@@ -150,7 +230,7 @@ export function SportsSettingsDialog({
     }
   }, [sportsData, sport]);
 
-  // Update league when sport changes (if current league is not valid for new sport)
+  // Update league when sport changes
   React.useEffect(() => {
     if (!sport || currentLeagues.length === 0) return;
     
@@ -160,20 +240,27 @@ export function SportsSettingsDialog({
     }
   }, [sport, currentLeagues, league]);
 
-  // Fetch teams when sport changes
+  // Get the league slug from sportsData for API calls
+  const getLeagueSlug = React.useCallback((sportId: string, leagueId: string) => {
+    const sportData = sportsData.find((s) => s.sport === sportId);
+    const leagueData = sportData?.leagues.find((l) => l.league === leagueId);
+    return leagueData?.slug;
+  }, [sportsData]);
+
+  // Fetch teams when sport or league changes
   React.useEffect(() => {
-    if (!sport) return;
+    if (!sport || !league) return;
     
-    async function fetchTeams() {
+    // Get the slug for team filtering
+    const leagueSlug = getLeagueSlug(sport, league);
+    if (!leagueSlug) return;
+    
+    async function fetchTeamsData() {
       setLoadingTeams(true);
       try {
-        const response = await fetch(
-          `https://kiwi-sports.makfissh.workers.dev/api/teams?sport=${sport}`
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setAvailableTeams(data.teams || []);
-        }
+        // Use local service
+        const teams = await getTeams(sport, leagueSlug!);
+        setAvailableTeams(teams);
       } catch {
         console.error("Failed to fetch teams");
         setAvailableTeams([]);
@@ -182,67 +269,27 @@ export function SportsSettingsDialog({
       }
     }
 
-    fetchTeams();
-    // Reset team selection when sport changes
-    setTeamInput("");
-    setSpecificTeam(false);
-  }, [sport]);
+    fetchTeamsData();
+  }, [sport, league, getLeagueSlug]);
 
-  // Update team input display when teams load (convert ID to display name)
-  React.useEffect(() => {
-    if (availableTeams.length > 0 && settings.team) {
-      const team = availableTeams.find((t) => t.id === settings.team);
-      if (team) {
-        setTeamInput(`${team.name} (${team.abbrev})`);
-      }
-    }
-  }, [availableTeams, settings.team]);
-
-  // Close dropdown when clicking outside
-  React.useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node) &&
-        inputRef.current &&
-        !inputRef.current.contains(e.target as Node)
-      ) {
-        setShowDropdown(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleTeamSelect = (team: TeamOption) => {
-    setTeamInput(`${team.name} (${team.abbrev})`);
-    setShowDropdown(false);
-  };
-
+  // Handle saving
   const handleSave = () => {
-    // Try to find matching team by name or use input as-is
-    const matchedTeam = availableTeams.find(
-      (t) =>
-        `${t.name} (${t.abbrev})` === teamInput ||
-        t.name.toLowerCase() === teamInput.toLowerCase() ||
-        t.abbrev.toLowerCase() === teamInput.toLowerCase()
-    );
-
     onSave({
       sport,
       league,
-      team: specificTeam ? (matchedTeam?.id || teamInput.trim() || undefined) : undefined,
+      // Join array back to comma-separated string
+      team: teamIds.length > 0 ? teamIds.join(",") : undefined,
     });
     onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md overflow-visible">
         <DialogHeader>
           <DialogTitle>Sports Settings</DialogTitle>
           <DialogDescription>
-            Configure sport, league, and team to display.
+            Configure sport, league, and teams to display.
           </DialogDescription>
         </DialogHeader>
 
@@ -250,7 +297,15 @@ export function SportsSettingsDialog({
           {/* Sport Select */}
           <div className="space-y-2">
             <Label htmlFor="sport">Sport</Label>
-            <Select value={sport} onValueChange={(v) => setSport(v ?? "")} disabled={loadingSports}>
+            <Select 
+              value={sport} 
+              onValueChange={(v) => {
+                setSport(v ?? "");
+                setTeamIds([]);
+                setInputValue("");
+              }} 
+              disabled={loadingSports}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue>
                   {loadingSports ? "Loading..." : (sport ? getSportName(sport) : "Select sport")}
@@ -271,7 +326,11 @@ export function SportsSettingsDialog({
             <Label htmlFor="league">League</Label>
             <Select 
               value={league} 
-              onValueChange={(v) => setLeague(v ?? "")} 
+              onValueChange={(v) => {
+                setLeague(v ?? "");
+                setTeamIds([]);
+                setInputValue("");
+              }} 
               disabled={loadingSports || currentLeagues.length === 0}
             >
               <SelectTrigger className="w-full">
@@ -289,79 +348,73 @@ export function SportsSettingsDialog({
             </Select>
           </div>
 
-          {/* Specific Team Switch */}
-          <div className="flex items-center justify-between">
-            <Label htmlFor="specific-team" className="flex flex-col gap-1 items-start">
-              <span>Show Specific Match Score</span>
-              <span className="text-xs font-normal text-muted-foreground">
-                Filter matches by a specific team
-              </span>
-            </Label>
-            <Switch
-              id="specific-team"
-              checked={specificTeam}
-              onCheckedChange={setSpecificTeam}
-            />
-          </div>
-
-          {/* Team Input with Suggestions */}
-          {specificTeam && (
-            <div className="space-y-2">
-              <Label>Team</Label>
-              <div className="relative">
-                <Input
-                  ref={inputRef}
-                  placeholder={loadingTeams ? "Loading teams..." : "Type or select a team..."}
-                  value={teamInput}
-                  onChange={(e) => setTeamInput(e.target.value)}
-                  onFocus={() => setShowDropdown(true)}
-                  disabled={loadingTeams}
-                  className="pr-8"
-                />
-                {teamInput && (
-                  <button
-                    type="button"
-                    onClick={() => setTeamInput("")}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+          {/* Team Select (Multi-select) */}
+          <div className="space-y-2">
+            <Label>Teams</Label>
+            <DndContext 
+              sensors={sensors} 
+              collisionDetection={closestCenter} 
+              onDragEnd={handleDragEnd}
+            >
+              <Combobox
+                value={teamIds}
+                onValueChange={(val) => setTeamIds(val as string[])}
+                onInputValueChange={setInputValue}
+                multiple
+                disabled={loadingTeams}
+              >
+                <ComboboxChips className="bg-background border rounded-md px-2 py-1 flex-wrap gap-1 min-h-[38px] w-full">
+                  <SortableContext 
+                    items={teamIds} 
+                    strategy={horizontalListSortingStrategy}
                   >
-                    <XIcon className="size-4" />
-                  </button>
-                )}
-                {showDropdown && (filteredTeams.length > 0 || teamInput.trim()) && (
-                  <div
-                    ref={dropdownRef}
-                    className="absolute z-50 mt-1 w-full max-h-48 overflow-auto rounded-md border bg-popover p-1 shadow-md"
-                  >
-                    {/* Show "Add custom" option when input doesn't match a team */}
-                    {teamInput.trim() && !availableTeams.some(
-                      (t) => 
-                        t.name.toLowerCase() === teamInput.toLowerCase() ||
-                        t.abbrev.toLowerCase() === teamInput.toLowerCase() ||
-                        `${t.name} (${t.abbrev})`.toLowerCase() === teamInput.toLowerCase()
-                    ) && (
-                      <button
-                        type="button"
-                        onClick={() => setShowDropdown(false)}
-                        className="w-full px-2 py-1.5 text-left text-sm rounded-sm hover:bg-accent hover:text-accent-foreground cursor-pointer border-b mb-1 pb-1.5"
-                      >
-                        Add "{teamInput.trim()}"
-                      </button>
-                    )}
-                    {filteredTeams.map((team) => (
-                      <button
-                        key={team.id}
-                        type="button"
-                        onClick={() => handleTeamSelect(team)}
-                        className="w-full px-2 py-1.5 text-left text-sm rounded-sm hover:bg-accent hover:text-accent-foreground cursor-pointer"
-                      >
-                        {team.name} ({team.abbrev})
-                      </button>
+                    {teamIds.map((id) => (
+                      <SortableTeamChip key={id} id={id}>
+                        {getTeamName(id)}
+                        <span
+                          role="button"
+                          className="ml-1 opacity-50 hover:opacity-100 cursor-pointer"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setTeamIds((prev) => prev.filter((p) => p !== id));
+                          }}
+                        >
+                          <XIcon className="size-3" />
+                        </span>
+                      </SortableTeamChip>
                     ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+                  </SortableContext>
+                  <ComboboxChipsInput 
+                    placeholder={teamIds.length === 0 ? "Select teams..." : ""} 
+                    className="min-w-[100px] flex-1 bg-transparent outline-none placeholder:text-muted-foreground text-sm"
+                  />
+                </ComboboxChips>
+                <ComboboxContent className="max-h-60 overflow-y-auto w-[var(--radix-combobox-trigger-width)]">
+                  <ComboboxList>
+                    {/* Custom Option */}
+                    {inputValue && filteredTeams.length === 0 && (
+                      <ComboboxItem value={inputValue}>
+                        Add "{inputValue}"
+                      </ComboboxItem>
+                    )}
+                    {/* Filtered Teams */}
+                    {filteredTeams.map((t) => (
+                      <ComboboxItem key={t.id} value={t.id}>
+                        {t.name} ({t.abbrev})
+                      </ComboboxItem>
+                    ))}
+                    {filteredTeams.length === 0 && !inputValue && (
+                      <ComboboxEmpty>No teams found</ComboboxEmpty>
+                    )}
+                  </ComboboxList>
+                </ComboboxContent>
+              </Combobox>
+            </DndContext>
+            <p className="text-[10px] text-muted-foreground">
+              Click and hold to arrange teams by priority
+            </p>
+          </div>
         </div>
 
         <DialogFooter>

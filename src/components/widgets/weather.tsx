@@ -62,7 +62,7 @@ async function fetchWeather(city: string, unit: "C" | "F" = "C", autoDetect = fa
     query = "auto:ip";
   }
 
-  const url = `https://kiwi-weather.makfissh.workers.dev/?query=${encodeURIComponent(query)}&provider=auto&data=simple&lang=en&unit=${unit}`;
+  const url = `${import.meta.env.VITE_WEATHER_API_URL}/?query=${encodeURIComponent(query)}&provider=auto&data=simple&lang=en&unit=${unit}`;
   const response = await fetch(url);
   
   if (!response.ok) {
@@ -87,7 +87,24 @@ async function fetchWeather(city: string, unit: "C" | "F" = "C", autoDetect = fa
 }
 
 export default function WeatherWidget({ city = "Dhaka", unit = "C", autoDetect = false, preview = false }: WeatherWidgetProps) {
-  const [weather, setWeather] = React.useState<WeatherData | null>(null);
+  // Cache key based on settings
+  const cacheKey = `weather-${autoDetect ? 'auto' : city}-${unit}`;
+  const CACHE_TTL = 4 * 60 * 60 * 1000; // 4 hours
+
+  // Initialize state from cache if available
+  const [weather, setWeather] = React.useState<WeatherData | null>(() => {
+    if (preview) return null;
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const { data } = JSON.parse(cached);
+        return data;
+      }
+    } catch {
+      // Ignore cache errors
+    }
+    return null;
+  });
   const [error, setError] = React.useState<string | null>(null);
 
   // Dummy data for preview mode
@@ -99,6 +116,20 @@ export default function WeatherWidget({ city = "Dhaka", unit = "C", autoDetect =
     high: 21,
     low: 14,
   }), []);
+
+  // Check if cache is fresh
+  const isCacheFresh = React.useCallback(() => {
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const { timestamp } = JSON.parse(cached);
+        return Date.now() - timestamp < CACHE_TTL;
+      }
+    } catch {
+      // Ignore
+    }
+    return false;
+  }, [cacheKey]);
 
   React.useEffect(() => {
     // Skip fetching in preview mode
@@ -122,6 +153,15 @@ export default function WeatherWidget({ city = "Dhaka", unit = "C", autoDetect =
         if (mounted) {
           setWeather(data);
           setError(null);
+          // Save to cache
+          try {
+            localStorage.setItem(cacheKey, JSON.stringify({
+              data,
+              timestamp: Date.now(),
+            }));
+          } catch {
+            // Ignore storage errors
+          }
         }
       } catch (err) {
         // Only set error if we have no cached data
@@ -131,16 +171,19 @@ export default function WeatherWidget({ city = "Dhaka", unit = "C", autoDetect =
       }
     }
 
-    loadWeather();
+    // Only fetch if cache is stale or missing
+    if (!isCacheFresh()) {
+      loadWeather();
+    }
 
     // Refresh weather every 30 minutes
-    const interval = setInterval(loadWeather, 30 * 60 * 1000);
+    const interval = setInterval(loadWeather, CACHE_TTL);
 
     return () => {
       mounted = false;
       clearInterval(interval);
     };
-  }, [city, unit, autoDetect, preview]);
+  }, [city, unit, autoDetect, preview, cacheKey, isCacheFresh]);
 
   // Use preview data or fetched data
   const displayWeather = preview ? previewData : weather;

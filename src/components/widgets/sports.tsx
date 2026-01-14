@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { registerWidget } from "@/lib/widgets/registry";
 import type { SportsSettings } from "@/lib/widgets/types";
 import { Radio } from "lucide-react";
+import { getScoreboard, type ApiResponse } from "@/lib/services/sports";
 
 // Helper function to parse and format cricket scores
 // Handles formats like "343 & 384/4" -> shows "343" smaller and "384" as main score
@@ -46,28 +47,20 @@ interface Team {
   abbrev: string;
   logo?: string;
   score?: string;
-  turn: boolean;
+  turn?: boolean;
 }
 
 interface Match {
   id: string;
   home: Team;
   away: Team;
-  status: "ongoing" | "upcoming" | "completed";
+  status: "ongoing" | "upcoming" | "done";
   statusDetail: string;
   league: string;
 }
 
-interface SportsData {
-  meta: {
-    sport: string;
-    league: string;
-    time: string;
-    count: number;
-    status: string;
-  };
-  matches: Match[];
-}
+// Use ApiResponse from local service
+type SportsData = ApiResponse;
 
 interface SportsWidgetProps {
   sport?: string;
@@ -81,18 +74,8 @@ async function fetchSportsData(
   league?: string,
   team?: string
 ): Promise<SportsData> {
-  const params = new URLSearchParams({ sport });
-  if (league) params.append("league", league);
-  if (team) params.append("team", team);
-
-  const url = `https://kiwi-sports.makfissh.workers.dev/api/scoreboard?${params.toString()}`;
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch sports data");
-  }
-
-  return response.json();
+  // Use local service instead of external API
+  return getScoreboard(sport, league, team);
 }
 
 export default function SportsWidget({
@@ -221,8 +204,11 @@ export default function SportsWidget({
     if (!displayData?.matches) return [];
     if (!team) return displayData.matches;
     
-    const teamLower = team.toLowerCase();
-    return displayData.matches.filter((m) => {
+    const selectedTeams = team.split(",").map(t => t.trim()).filter(Boolean);
+    if (selectedTeams.length === 0) return displayData.matches;
+
+    // Filter matches that involve ANY of the selected teams
+    const matches = displayData.matches.filter((m) => {
       const homeId = m.home.id.split("-")[0];
       const awayId = m.away.id.split("-")[0];
       const homeAbbrev = m.home.abbrev.toLowerCase();
@@ -230,14 +216,47 @@ export default function SportsWidget({
       const homeName = m.home.name.toLowerCase();
       const awayName = m.away.name.toLowerCase();
       
-      return homeId === team || awayId === team || 
-             homeAbbrev === teamLower || awayAbbrev === teamLower ||
-             homeName.includes(teamLower) || awayName.includes(teamLower);
+      return selectedTeams.some(t => {
+        const tLower = t.toLowerCase();
+        return homeId === t || awayId === t || 
+               homeAbbrev === tLower || awayAbbrev === tLower ||
+               homeName.includes(tLower) || awayName.includes(tLower);
+      });
+    });
+
+    // Sort matches: Priority 1 = Ongoing, Priority 2 = Selection Order
+    return matches.sort((a, b) => {
+      // If one is ongoing and other isn't, ongoing wins
+      if (a.status === "ongoing" && b.status !== "ongoing") return -1;
+      if (b.status === "ongoing" && a.status !== "ongoing") return 1;
+
+      // Otherwise, sort by selection order priority
+      const getPriority = (m: Match) => {
+        const homeId = m.home.id.split("-")[0];
+        const awayId = m.away.id.split("-")[0];
+        const homeName = m.home.name.toLowerCase();
+        const awayName = m.away.name.toLowerCase();
+        
+        // Find the index of the PRIMARY selected team that triggered this match inclusion
+        // If multiple selected teams are in the match (e.g. A vs B), return the lowest index (highest priority)
+        let priority = Number.MAX_SAFE_INTEGER;
+        
+        selectedTeams.forEach((t, index) => {
+          const tLower = t.toLowerCase();
+          if (homeId === t || awayId === t || homeName.includes(tLower) || awayName.includes(tLower)) {
+             priority = Math.min(priority, index);
+          }
+        });
+        
+        return priority;
+      };
+
+      return getPriority(a) - getPriority(b);
     });
   }, [displayData?.matches, team]);
 
-  // Get the first match (or first ongoing match if available)
-  const match = filteredMatches.find((m) => m.status === "ongoing") || filteredMatches[0];
+  // Select the first match from the sorted list
+  const match = filteredMatches[0];
 
   if (error && !data) {
     return (

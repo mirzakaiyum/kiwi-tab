@@ -21,7 +21,8 @@ import { ClockSettingsDialog, type ClockSettings } from "@/components/dialogs/cl
 import { DualClockSettingsDialog, type DualClockSettings } from "@/components/dialogs/dual-clock-settings-dialog";
 import { WeatherSettingsDialog } from "@/components/dialogs/weather-settings-dialog";
 import { SportsSettingsDialog } from "@/components/dialogs/sports-settings-dialog";
-import type { WeatherSettings, SportsSettings } from "@/lib/widgets/types";
+import { SolunaSettingsDialog } from "@/components/dialogs/soluna-settings-dialog";
+import type { WeatherSettings, SportsSettings, SolunaSettings } from "@/lib/widgets/types";
 import {
   getWidget,
   getWidgetComponent,
@@ -141,6 +142,11 @@ const WidgetGrid = React.forwardRef<HTMLDivElement, WidgetGridProps>(
       setSettingsWidgetId(null);
     };
 
+    const handleSaveSolunaSettings = (settings: SolunaSettings) => {
+      setWidgets((prev) => updateWidgetSettings(prev, settingsWidgetId!, settings));
+      setSettingsWidgetId(null);
+    };
+
     // Get default settings for dialogs
     const defaultClockSettings: ClockSettings = (getWidgetDefaultSettings("analogClock") as unknown as ClockSettings) || {
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -153,14 +159,21 @@ const WidgetGrid = React.forwardRef<HTMLDivElement, WidgetGridProps>(
     };
 
     const defaultWeatherSettings: WeatherSettings = (getWidgetDefaultSettings("weather") as unknown as WeatherSettings) || {
-      city: "Dhaka",
+      city: "London",
       unit: "C",
       autoDetect: false,
     };
 
     const defaultSportsSettings: SportsSettings = (getWidgetDefaultSettings("sports") as unknown as SportsSettings) || {
-      sport: "cricket",
-      league: "international",
+      sport: "soccer",
+      league: "eng.1",
+    };
+
+    const defaultSolunaSettings: SolunaSettings = (getWidgetDefaultSettings("soluna") as unknown as SolunaSettings) || {
+      displayMode: "sun",
+      location: "London",
+      autoDetect: false,
+      calculationMethod: "1",
     };
 
     const gridClassName = cn(
@@ -235,6 +248,14 @@ const WidgetGrid = React.forwardRef<HTMLDivElement, WidgetGridProps>(
           onOpenChange={(open) => !open && setSettingsWidgetId(null)}
           settings={(settingsWidget?.settings as unknown as SportsSettings) || defaultSportsSettings}
           onSave={handleSaveSportsSettings}
+        />
+
+        {/* Soluna Settings Dialog */}
+        <SolunaSettingsDialog
+          open={settingsWidgetId !== null && settingsWidget?.type === "soluna"}
+          onOpenChange={(open) => !open && setSettingsWidgetId(null)}
+          settings={(settingsWidget?.settings as unknown as SolunaSettings) || defaultSolunaSettings}
+          onSave={handleSaveSolunaSettings}
         />
       </>
     );
