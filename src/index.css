@@ -118,7 +118,10 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-none;
+    }
+  *:focus-visible {
+    @apply outline-ring/50;
     }
   body {
     @apply font-sans bg-background text-foreground;
@@ -126,4 +129,79 @@
   html {
     @apply font-sans;
     }
+}
+
+
+/* Gradient border utilities - macOS dock inspired glass effect */
+@layer utilities {
+  .gradient-border {
+    position: relative;
+    border: none !important;
+  }
+  
+  .gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      172deg,
+      oklch(1 0 0 / 35%) 0%,
+      oklch(1 0 0 / 4%) 12%,
+      oklch(1 0 0 / 4%) 85%,
+      oklch(1 0 0 / 30%) 100%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* Stronger variant for cards/widgets */
+  .gradient-border-strong::before {
+    background: linear-gradient(
+      135deg,
+      oklch(1 0 0 / 35%) 0%,
+      oklch(1 0 0 / 5%) 50%,
+      oklch(1 0 0 / 20%) 100%
+    );
+  }
+
+  /* Fix backdrop-blur glitches by creating isolated compositing layers */
+  .backdrop-blur-fix {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform;
+    isolation: isolate;
+    contain: layout style paint;
+  }
+
+  /* Apply to all backdrop-blur elements */
+  [class*="backdrop-blur"] {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    isolation: isolate;
+    /* Force GPU acceleration and prevent repaint issues */
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-perspective: 1000;
+    perspective: 1000;
+  }
+
+  /* Prevent hover state from causing repaints on backdrop-blur siblings */
+  [class*="backdrop-blur"]:hover,
+  [class*="backdrop-blur"] *:hover {
+    transform: translateZ(0);
+  }
+
+  /* Fix for elements with hover transforms near backdrop-blur elements */
+  /* Ensure they maintain GPU layer even when not hovered */
+  [class*="hover:scale"],
+  [class*="hover:translate"],
+  [class*="hover:-translate"] {
+    transform: translateZ(0) scale(1) translate(0, 0);
+    will-change: transform;
+  }
 }

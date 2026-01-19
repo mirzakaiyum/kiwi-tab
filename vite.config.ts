@@ -38,7 +38,7 @@ export default defineConfig({
           // Split icon libraries
           'vendor-icons': ['lucide-react', 'react-icons'],
           // Split UI component libraries
-          'vendor-ui': ['@radix-ui/react-label', '@base-ui/react', 'cmdk', 'vaul'],
+          'vendor-ui': ['@radix-ui/react-label', 'cmdk', 'vaul'],
         },
       },
     },

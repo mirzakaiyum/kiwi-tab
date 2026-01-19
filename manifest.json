@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Kiwi Tab",
-  "version": "0.1.0",
+  "version": "0.0.4",
   "description": "A modern Chrome new tab replacement with enhanced features",
   "author": "Kaiyum Mirza",
   
@@ -28,7 +28,9 @@
     "https://site.api.espn.com/*",
     "https://api.aladhan.com/*",
     "https://aladhan.api.islamic.network/*",
-    "https://aladhan.api.alislam.ru/*"
+    "https://aladhan.api.alislam.ru/*",
+    "https://images.pexels.com/*",
+    "https://images.unsplash.com/*"
   ],
 
   "icons": {

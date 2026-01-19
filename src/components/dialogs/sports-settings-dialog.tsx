@@ -129,7 +129,7 @@ export function SportsSettingsDialog({
   
   // Teams state
   const [availableTeams, setAvailableTeams] = React.useState<TeamOption[]>([]);
-  const [loadingTeams, setLoadingTeams] = React.useState(false);
+  const [, setLoadingTeams] = React.useState(false);
 
   // DnD Sensors
   const sensors = useSensors(
@@ -356,13 +356,7 @@ export function SportsSettingsDialog({
               collisionDetection={closestCenter} 
               onDragEnd={handleDragEnd}
             >
-              <Combobox
-                value={teamIds}
-                onValueChange={(val) => setTeamIds(val as string[])}
-                onInputValueChange={setInputValue}
-                multiple
-                disabled={loadingTeams}
-              >
+        <Combobox>
                 <ComboboxChips className="bg-background border rounded-md px-2 py-1 flex-wrap gap-1 min-h-[38px] w-full">
                   <SortableContext 
                     items={teamIds} 
@@ -390,7 +384,7 @@ export function SportsSettingsDialog({
                     className="min-w-[100px] flex-1 bg-transparent outline-none placeholder:text-muted-foreground text-sm"
                   />
                 </ComboboxChips>
-                <ComboboxContent className="max-h-60 overflow-y-auto w-[var(--radix-combobox-trigger-width)]">
+                <ComboboxContent className="max-h-60 overflow-y-auto w-(--radix-combobox-trigger-width)">
                   <ComboboxList>
                     {/* Custom Option */}
                     {inputValue && filteredTeams.length === 0 && (

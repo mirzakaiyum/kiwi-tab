@@ -1,0 +1,122 @@
+// Pinned Sites Storage Utilities
+
+export interface PinnedSite {
+  id: string;
+  url: string;
+  title: string;
+  backgroundColor?: string;
+}
+
+const STORAGE_KEY = "kiwi-pinned-sites";
+const MAX_PINNED_SITES = 16;
+
+// Default popular sites
+export const DEFAULT_PINNED_SITES: PinnedSite[] = [
+  { id: "1", url: "https://youtube.com", title: "YouTube" },
+  { id: "2", url: "https://facebook.com", title: "Facebook" },
+  { id: "3", url: "https://x.com", title: "X" },
+  { id: "4", url: "https://reddit.com", title: "Reddit" },
+  { id: "5", url: "https://google.com", title: "Google" },
+  { id: "6", url: "https://amazon.com", title: "Amazon" },
+  { id: "7", url: "https://netflix.com", title: "Netflix" },
+  { id: "8", url: "https://github.com", title: "GitHub" },
+];
+
+// Get favicon URL using Google's service
+export function getFaviconUrl(url: string, size: number = 64): string {
+  try {
+    const domain = new URL(url).hostname;
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=${size}`;
+  } catch {
+    return `https://www.google.com/s2/favicons?domain=example.com&sz=${size}`;
+  }
+}
+
+// Generate unique ID
+function generateId(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+// Check if running in Chrome extension context
+function isChromeExtension(): boolean {
+  return typeof chrome !== "undefined" && !!chrome.storage?.sync;
+}
+
+// Load pinned sites from storage
+export function loadPinnedSites(): PinnedSite[] {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.slice(0, MAX_PINNED_SITES);
+      }
+    }
+  } catch {
+    // Fall through to defaults
+  }
+  return DEFAULT_PINNED_SITES;
+}
+
+// Save pinned sites to storage
+export function savePinnedSites(sites: PinnedSite[]): void {
+  const toSave = sites.slice(0, MAX_PINNED_SITES);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+
+  // Also sync to chrome.storage if available
+  if (isChromeExtension()) {
+    chrome.storage.sync.set({ [STORAGE_KEY]: toSave });
+  }
+}
+
+// Load from chrome.storage.sync (async, for extension context)
+export async function loadPinnedSitesAsync(): Promise<PinnedSite[]> {
+  if (isChromeExtension()) {
+    return new Promise((resolve) => {
+      chrome.storage.sync.get([STORAGE_KEY], (result) => {
+        const sites = result[STORAGE_KEY];
+        if (Array.isArray(sites) && sites.length > 0) {
+          resolve(sites.slice(0, MAX_PINNED_SITES));
+        } else {
+          resolve(loadPinnedSites());
+        }
+      });
+    });
+  }
+  return loadPinnedSites();
+}
+
+// Update a single site
+export function updatePinnedSite(
+  sites: PinnedSite[],
+  id: string,
+  updates: Partial<Omit<PinnedSite, "id">>
+): PinnedSite[] {
+  return sites.map((site) =>
+    site.id === id ? { ...site, ...updates } : site
+  );
+}
+
+// Remove a site (leaves slot empty by setting to null-like state)
+export function removePinnedSite(sites: PinnedSite[], id: string): PinnedSite[] {
+  return sites.filter((site) => site.id !== id);
+}
+
+// Add a new site (if under max limit)
+export function addPinnedSite(
+  sites: PinnedSite[],
+  url: string,
+  title: string,
+  backgroundColor?: string
+): PinnedSite[] {
+  if (sites.length >= MAX_PINNED_SITES) {
+    return sites;
+  }
+  const newSite: PinnedSite = {
+    id: generateId(),
+    url: url.startsWith("http") ? url : `https://${url}`,
+    title,
+    backgroundColor,
+  };
+  return [...sites, newSite];
+}

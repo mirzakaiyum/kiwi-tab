@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { SolunaSettings, SolunaDisplayMode } from "@/lib/widgets/types";
 import { getMethods } from "@/lib/services/soluna";
 
@@ -84,22 +84,15 @@ export function SolunaSettingsDialog({
           {/* Display Mode */}
           <div className="flex items-center justify-between">
             <Label>Display</Label>
-            <div className="bg-muted inline-flex items-center overflow-hidden rounded-md p-0.5">
-              {displayModeOptions.map((option) => (
-                <button
-                  key={option.value}
-                  className={cn(
-                    "relative flex items-center gap-1.5 px-2.5 py-1 text-xs cursor-pointer rounded transition-all",
-                    displayMode === option.value
-                      ? "text-foreground bg-background shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                  onClick={() => setDisplayMode(option.value)}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
+            <Tabs value={displayMode} onValueChange={(value) => setDisplayMode(value as SolunaDisplayMode)}>
+              <TabsList>
+                {displayModeOptions.map((option) => (
+                  <TabsTrigger key={option.value} value={option.value}>
+                    {option.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
           </div>
 
           {/* Location */}
@@ -111,7 +104,7 @@ export function SolunaSettingsDialog({
               onChange={(e) => setLocation(e.target.value)}
               placeholder="London"
               disabled={autoDetect}
-              className="bg-background w-40 text-sm disabled:opacity-50"
+              className="w-40 text-sm disabled:opacity-50"
             />
           </div>
 

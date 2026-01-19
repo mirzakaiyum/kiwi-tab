@@ -25,7 +25,7 @@ const chartConfig = {
 
 export function RadialChart({
   progress,
-  size = 38,
+  size = 34,
 }: RadialChartProps) {
   // Clamp progress between 0-100
   const clampedProgress = Math.max(0, Math.min(100, progress));
@@ -41,7 +41,7 @@ export function RadialChart({
   return (
     <ChartContainer
       config={chartConfig}
-      className="aspect-square -ml-1 [&_.recharts-radial-bar-background-sector]:fill-white/10"
+      className="aspect-square -ml-1.5 [&_.recharts-radial-bar-background-sector]:fill-white/10"
       style={{ width: size, height: size }}
     >
       <RadialBarChart

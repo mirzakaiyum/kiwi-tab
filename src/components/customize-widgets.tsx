@@ -1,12 +1,11 @@
-import { useState, Suspense } from "react";
-import { Pencil, Plus } from "lucide-react";
+import { useState, useEffect, Suspense } from "react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { getAllWidgets, type WidgetDefinition } from "@/lib/widgets";
 
 export function CustomizeButton() {
-  const [open, setOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
 
@@ -14,18 +13,23 @@ export function CustomizeButton() {
   const availableWidgets = getAllWidgets();
 
   const handleOpen = () => {
-    setOpen(true);
     setIsVisible(true);
     setIsClosing(false);
     window.dispatchEvent(new CustomEvent("kiwi-picker-open", { detail: { open: true } }));
   };
+
+  // Listen for event to open widget picker from dock
+  useEffect(() => {
+    const handleOpenWidgetPicker = () => handleOpen();
+    window.addEventListener("kiwi-open-widget-picker", handleOpenWidgetPicker);
+    return () => window.removeEventListener("kiwi-open-widget-picker", handleOpenWidgetPicker);
+  }, []);
 
   const handleClose = () => {
     if (isClosing) return; // Prevent multiple calls
     setIsClosing(true);
     window.dispatchEvent(new CustomEvent("kiwi-picker-open", { detail: { open: false } }));
     setTimeout(() => {
-      setOpen(false);
       setIsVisible(false);
       setIsClosing(false);
     }, 200);
@@ -39,16 +43,6 @@ export function CustomizeButton() {
 
   return (
     <>
-      {/* Customize Button */}
-      <Button
-        variant="ghost"
-        onClick={() => (open ? handleClose() : handleOpen())}
-        className="fixed bottom-4 right-14 rounded-full bg-background/10 backdrop-blur-xl border border-border hover:bg-input"
-      >
-        <Pencil className="size-3" />
-        <span className="">Customize</span>
-      </Button>
-
       {/* Widget Picker Popup */}
       {isVisible && (
         <div

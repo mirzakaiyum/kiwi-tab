@@ -60,9 +60,9 @@ export function MainContent({ children }: MainContentProps) {
     };
 
     return (
-        <ScrollArea className="h-screen w-screen">
+        <ScrollArea className="h-screen w-screen relative pointer-events-none">
             <div 
-                className="mx-auto text-foreground flex flex-col items-center justify-center px-4 pt-24 w-3xl transition-transform duration-300 ease-in-out"
+                className="mx-auto text-foreground flex flex-col items-center justify-center px-4 pt-24 w-3xl transition-transform duration-300 ease-in-out pointer-events-auto"
                 style={{ transform: getTransform() }}
             >
                 {children}

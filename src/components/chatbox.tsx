@@ -338,21 +338,19 @@ export function Chatbox() {
                     <div className="flex items-center gap-1">
                         {/* Model Picker */}
                         <DropdownMenu>
-                            <DropdownMenuTrigger
-                                render={
-                                    <Button variant="ghost" size="sm" className="gap-2 rounded-md px-2">
-                                        <img
-                                            src={selectedModel.icon}
-                                            alt={selectedModel.name}
-                                            width={16}
-                                            height={16}
-                                            className="size-4 rounded-sm"
-                                        />
-                                        <span className="text-xs font-medium">{selectedModel.name}</span>
-                                        <ChevronDown className="size-3 text-muted-foreground/60" />
-                                    </Button>
-                                }
-                            />
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="gap-2 rounded-md px-2">
+                                <img
+                                    src={selectedModel.icon}
+                                    alt={selectedModel.name}
+                                    width={16}
+                                    height={16}
+                                    className="size-4 rounded-sm"
+                                />
+                                <span className="text-xs font-medium">{selectedModel.name}</span>
+                                <ChevronDown className="size-3 text-muted-foreground/60" />
+                            </Button>
+                        </DropdownMenuTrigger>
                             <DropdownMenuContent align="start" className="w-40">
                                 <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">AI Models</div>
                                 {MODELS.map((model) => (
@@ -395,29 +393,29 @@ export function Chatbox() {
                         {/* Experts Picker - only show for AI models */}
                         {!isSearchEngine && (
                             <DropdownMenu>
-                                <DropdownMenuTrigger
-                                    render={(() => {
-                                        const TriggerIcon = selectedExpert 
-                                            ? (EXPERT_ICONS[selectedExpert.icon] || Sparkles)
-                                            : Sparkles;
-                                        return (
-                                            <Button 
-                                                variant="outline" 
-                                                size="sm" 
-                                                className={cn(
-                                                    "gap-2 px-2 border-primary hover:text-primary hover:bg-primary/10 focus-visible:text-primary focus-visible:bg-primary/10 text-primary rounded-md bg-primary/10",
-                                                    !selectedExpert && "text-foreground/50 bg-transparent hover:text-foreground hover:bg-foreground/10 border-transparent"
-                                                )}
-                                            >
-                                                <TriggerIcon className="size-3" />
-                                                <span className="text-xs font-medium">
-                                                    {selectedExpert?.name || "Expert"}
-                                                </span>
-                                                <ChevronDown className="size-3 opacity-60" />
-                                            </Button>
-                                        );
-                                    })()}
-                                />
+                                <DropdownMenuTrigger asChild>
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        className={cn(
+                                            "gap-2 px-2 border-primary hover:text-primary hover:bg-primary/10 focus-visible:text-primary focus-visible:bg-primary/10 text-primary rounded-md bg-primary/10",
+                                            !selectedExpert && "text-foreground/50 bg-transparent hover:text-foreground hover:bg-foreground/10 border-transparent"
+                                        )}
+                                    >
+                                        {selectedExpert ? (
+                                            (() => {
+                                                const Icon = EXPERT_ICONS[selectedExpert.icon] || Sparkles;
+                                                return <Icon className="size-3" />;
+                                            })()
+                                        ) : (
+                                            <Sparkles className="size-3" />
+                                        )}
+                                        <span className="text-xs font-medium">
+                                            {selectedExpert?.name || "Expert"}
+                                        </span>
+                                        <ChevronDown className="size-3 opacity-60" />
+                                    </Button>
+                                </DropdownMenuTrigger>
                                 <DropdownMenuContent align="start" className="w-48">
                                     <div className="flex items-center justify-between px-2 py-1.5">
                                         <span className="text-xs font-medium text-muted-foreground">Select Expert</span>

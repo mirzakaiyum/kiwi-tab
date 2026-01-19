@@ -4,8 +4,8 @@
 
 ### New Widgets
 
-- **Soluna Widget** - Prayer times, sunrise/sunset, and moon phases with three
-  display modes:
+  - **Soluna Widget** - Prayer times, sunrise/sunset, and moon phases with three
+    display modes:
   - **Prayer Mode** - Current prayer with countdown to next, radial progress
     chart, and prayer-specific icons
   - **Sun Mode** - Sunrise and sunset times with daylight duration
@@ -17,11 +17,6 @@
 - Background shuffle frequency options: 1 hour, 1 day, 1 week, or never
 - Smoother background loading with fade-in transitions
 
-### Sports Widget Enhancements
-
-- 🔴 Live indicator for ongoing matches
-- Team filtering support
-- Auto-refresh every minute
 
 ### Other Improvements
 
@@ -32,5 +27,5 @@
 
 ## 🗑️ Removed
 
-- Removed cricket and in-house API fetches in favor of proxies
+- Removed cricket and proxy API fetches in-house fetches
 

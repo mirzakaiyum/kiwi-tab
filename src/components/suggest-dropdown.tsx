@@ -136,7 +136,7 @@ export function SuggestDropdown({
     const showShortcuts = !searchLoading && searchSuggestions.length === 0 && !isExpertMode;
 
     return (
-        <div className="bg-input border-border animate-in fade-in slide-in-from-top-1 absolute top-full -left-px -right-px z-30 rounded-b-xl border overflow-hidden shadow-md backdrop-blur-xl p-1">
+        <div className="bg-input border-border animate-in fade-in slide-in-from-top-1 absolute top-full -left-px -right-px z-30 rounded-b-xl border overflow-hidden shadow-md p-1">
             <Command className="bg-transparent">
                 <CommandList className="max-h-none">
                     {/* Loading state */}

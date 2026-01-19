@@ -102,9 +102,9 @@ export default function CreateShortcutDialog({
 
                 <DialogFooter>
                     <div className="flex gap-2">
-                        <DialogClose
-                            render={<Button variant="outline">Close</Button>}
-                        />
+                        <DialogClose asChild>
+                            <Button variant="outline">Close</Button>
+                        </DialogClose>
                         <Button onClick={handleSave} disabled={maxReached}>
                             Save
                         </Button>

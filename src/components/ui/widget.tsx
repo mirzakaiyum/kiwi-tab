@@ -3,7 +3,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const widgetVariants = cva(
-  "relative flex flex-col border whitespace-nowrap rounded-xl",
+  "relative flex flex-col whitespace-nowrap rounded-4xl gradient-border",
   {
     variants: {
       size: {
@@ -16,7 +16,7 @@ const widgetVariants = cva(
         tight: "p-4",
       },
       variant: {
-        default: "bg-muted/40 backdrop-blur-md text-foreground",
+        default: "bg-white/10 dark:bg-white/10 backdrop-blur-2xl text-foreground",
         secondary: "bg-secondary text-secondary-foreground",
       },
     },

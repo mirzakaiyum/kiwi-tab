@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { cn } from "@/lib/utils";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { WeatherSettings } from "@/lib/widgets/types";
 
 interface WeatherSettingsDialogProps {
@@ -66,7 +66,7 @@ export function WeatherSettingsDialog({
                       onChange={(e) => setCity(e.target.value)}
                       placeholder="Dhaka"
                       disabled={autoDetect}
-                      className="bg-background w-40 text-sm disabled:opacity-50"
+                      className="w-40 text-sm disabled:opacity-50"
                   />
               </div>
 
@@ -83,25 +83,12 @@ export function WeatherSettingsDialog({
               {/* Temperature Unit */}
               <div className="flex items-center justify-between">
                   <Label>Temperature unit</Label>
-                  <div className="bg-muted inline-flex items-center overflow-hidden rounded-md p-0.5">
-                      {[
-                          { value: "C" as const, label: "°C" },
-                          { value: "F" as const, label: "°F" },
-                      ].map((option) => (
-                          <button
-                              key={option.value}
-                              className={cn(
-                                  "relative flex items-center gap-1.5 px-2.5 py-1 text-xs cursor-pointer rounded transition-all",
-                                  unit === option.value
-                                      ? "text-foreground bg-background shadow-sm"
-                                      : "text-muted-foreground hover:text-foreground"
-                              )}
-                              onClick={() => setUnit(option.value)}
-                          >
-                              {option.label}
-                          </button>
-                      ))}
-                  </div>
+                  <Tabs value={unit} onValueChange={(v) => setUnit(v as "C" | "F")}>
+                      <TabsList className="grid w-24 grid-cols-2">
+                          <TabsTrigger value="C">°C</TabsTrigger>
+                          <TabsTrigger value="F">°F</TabsTrigger>
+                      </TabsList>
+                  </Tabs>
               </div>
           </div>
         </div>

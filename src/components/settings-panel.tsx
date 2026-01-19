@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { Settings, CircleHelp } from "lucide-react";
+import { CircleHelp } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+
 import { Input } from "@/components/ui/input";
 import {
     Select,
@@ -13,13 +13,10 @@ import {
 
 import {
     Sheet,
-    SheetClose,
     SheetContent,
     SheetDescription,
-    SheetFooter,
     SheetHeader,
     SheetTitle,
-    SheetTrigger,
 } from "@/components/ui/sheet";
 import {
     Tooltip,
@@ -37,6 +34,7 @@ const BACKGROUND_FREQUENCY_KEY = "kiwi-background-frequency";
 type BackgroundFrequency = "1hour" | "1day" | "1week" | "never";
 
 export function SettingsButton() {
+    const [isOpen, setIsOpen] = useState(false);
     const [customGreeting, setCustomGreeting] = useState(() => 
         localStorage.getItem(GREETING_STORAGE_KEY) || ""
     );
@@ -50,6 +48,12 @@ export function SettingsButton() {
         (localStorage.getItem(BACKGROUND_FREQUENCY_KEY) as BackgroundFrequency) || "never"
     );
 
+    // Listen for event to open settings from dock
+    useEffect(() => {
+        const handleOpenSettings = () => setIsOpen(true);
+        window.addEventListener("kiwi-open-settings", handleOpenSettings);
+        return () => window.removeEventListener("kiwi-open-settings", handleOpenSettings);
+    }, []);
 
     // Persist greeting changes
     useEffect(() => {
@@ -91,18 +95,12 @@ export function SettingsButton() {
 
     return (
         <TooltipProvider>
-            <Sheet modal={false}>
-                <SheetTrigger asChild>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="fixed bottom-4 right-4 rounded-full bg-background/10 backdrop-blur-xl border border-border hover:bg-input"
-                    >
-                        <Settings className="size-3" />
-                        <span className="sr-only">Settings</span>
-                    </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="flex flex-col overflow-hidden">
+            <Sheet modal={false} open={isOpen} onOpenChange={setIsOpen}>
+                <SheetContent 
+                    side="right" 
+                    className="flex flex-col overflow-hidden"
+                    onOpenAutoFocus={(e) => e.preventDefault()}
+                >
                     <SheetHeader>
                         <SheetTitle>Settings</SheetTitle>
                         <SheetDescription>
@@ -110,7 +108,7 @@ export function SettingsButton() {
                         </SheetDescription>
                     </SheetHeader>
                             
-                            <div className="p-4 space-y-6 overflow-y-auto flex-1">
+                            <div className="px-4 space-y-6 overflow-y-auto flex-1">
                                 {/* General */}
                                 <div className="space-y-2">
                                     <h3 className="text-xs opacity-50 uppercase tracking-widest">General</h3>
@@ -132,10 +130,12 @@ export function SettingsButton() {
                                             <div className="flex items-center gap-1.5 text-sm">
                                                 <span>Greeting</span>
                                                 <Tooltip>
-                                                    <TooltipTrigger>
-                                                        <CircleHelp className="size-3.5 text-muted-foreground cursor-help" />
+                                                    <TooltipTrigger asChild>
+                                                        <button className="outline-none">
+                                                            <CircleHelp className="size-3.5 text-muted-foreground cursor-help" />
+                                                        </button>
                                                     </TooltipTrigger>
-                                                    <TooltipContent className="border border-border bg-background">
+                                                    <TooltipContent className="border border-border bg-background text-foreground">
                                                         <p>Leave empty for time-based greeting</p>
                                                     </TooltipContent>
                                                 </Tooltip>
@@ -143,7 +143,7 @@ export function SettingsButton() {
                                             <Input
                                                 value={customGreeting}
                                                 onChange={(e) => setCustomGreeting(e.target.value)}
-                                                placeholder="Good Morning"
+                                                placeholder="Bonjour"
                                                 className="bg-background border-transparent w-40 text-sm"
                                             />
                                         </div>
@@ -153,10 +153,12 @@ export function SettingsButton() {
                                             <div className="flex items-center gap-1.5 text-sm">
                                                 <span>Name</span>
                                                 <Tooltip>
-                                                    <TooltipTrigger>
-                                                        <CircleHelp className="size-3.5 text-muted-foreground cursor-help" />
+                                                    <TooltipTrigger asChild>
+                                                        <button className="outline-none">
+                                                            <CircleHelp className="size-3.5 text-muted-foreground cursor-help" />
+                                                        </button>
                                                     </TooltipTrigger>
-                                                    <TooltipContent className="border border-border bg-background">
+                                                    <TooltipContent className="border border-border bg-background text-foreground">
                                                         <p>Leave empty to show "there"</p>
                                                     </TooltipContent>
                                                 </Tooltip>
@@ -206,7 +208,6 @@ export function SettingsButton() {
                                                         { value: "1hour" as const, label: "1h" },
                                                         { value: "1day" as const, label: "1d" },
                                                         { value: "1week" as const, label: "1w" },
-                                                        { value: "never" as const, label: "Never" },
                                                     ].map((option) => (
                                                         <button
                                                             key={option.value}
@@ -244,12 +245,6 @@ export function SettingsButton() {
                                     </button>
                                 </div>
                             </div>
-
-                    <SheetFooter>
-                        <SheetClose asChild>
-                            <Button variant="outline">Close</Button>
-                        </SheetClose>
-                    </SheetFooter>
                 </SheetContent>
             </Sheet>
         </TooltipProvider>
