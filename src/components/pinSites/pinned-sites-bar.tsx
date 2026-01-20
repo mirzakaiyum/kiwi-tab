@@ -1,6 +1,20 @@
 import React from "react";
 
 import {
+  closestCenter,
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import type { DragEndEvent } from "@dnd-kit/core";
+import {
+  horizontalListSortingStrategy,
+  SortableContext,
+  sortableKeyboardCoordinates,
+} from "@dnd-kit/sortable";
+import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -9,37 +23,25 @@ import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
-  ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import {
   type EditPinnedSiteData,
   EditPinnedSiteDialog,
 } from "@/components/dialogs/edit-pinned-site-dialog";
+import { SortableSite } from "@/components/pinSites/sortable-site";
 import {
   addPinnedSite,
   getFaviconUrl,
   loadPinnedSites,
   type PinnedSite,
   removePinnedSite,
+  reorderPinnedSites,
   savePinnedSites,
   updatePinnedSite,
 } from "@/lib/pinned-sites";
-import {
-  Pencil,
-  Plus,
-  Settings,
-  SlidersHorizontal,
-  Trash2,
-} from "lucide-react";
-import { useContextMenu } from "@/contexts/context-menu-context";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@radix-ui/react-dropdown-menu";
+import { LayoutGrid, Pencil, Plus, Settings, Trash2 } from "lucide-react";
+import { useContextMenu } from "@/contexts/context-menu";
 
 const MAX_PINNED_SITES = 16;
 
@@ -50,6 +52,31 @@ export function PinnedSitesBar() {
   );
   const [editingSite, setEditingSite] = React.useState<PinnedSite | null>(null);
   const [isAdding, setIsAdding] = React.useState(false);
+
+  // Configure sensors for drag detection
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // 8px movement required to start drag
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  // Handle drag end - reorder sites
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setSites((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        return reorderPinnedSites(items, oldIndex, newIndex);
+      });
+    }
+  };
 
   // Persist sites on change
   React.useEffect(() => {
@@ -120,62 +147,79 @@ export function PinnedSitesBar() {
                 );
               }}
             >
-              {/* Existing sites */}
-              {sites.map((site) => (
-                <Tooltip key={site.id}>
-                  <TooltipTrigger asChild>
-                    <button
-                      className="size-10 rounded-xl hover:brightness-110 flex items-center justify-center overflow-hidden transition-all duration-200 cursor-pointer shadow-sm hover:scale-110 hover:-translate-y-1 relative"
-                      style={{
-                        backgroundColor: site.backgroundColor ||
-                          "rgba(255,255,255,1)",
-                      }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleSiteClick(site.url);
-                      }}
-                      onContextMenu={(e) => {
-                        showContextMenu(e, [
-                          {
-                            id: "edit",
-                            label: "Edit Site",
-                            icon: <Pencil className="size-4 mr-2" />,
-                            onClick: () => handleEdit(site),
-                            separator: true,
-                          },
-                          {
-                            id: "remove",
-                            label: "Remove Site",
-                            icon: <Trash2 className="size-4 mr-2" />,
-                            variant: "destructive",
-                            onClick: () => handleRemove(site.id),
-                          },
-                        ]);
-                      }}
-                    >
-                      <img
-                        src={getFaviconUrl(site.url, 64)}
-                        alt={site.title}
-                        className="size-7 object-contain"
-                        loading="lazy"
-                      />
-                      {/* iOS-style gradient overlay + inner border */}
-                      <div
-                        className="absolute inset-0 pointer-events-none rounded-xl z-10"
-                        style={{
-                          background:
-                            "linear-gradient(to bottom, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%, rgba(0,0,0,0.15) 100%)",
-                          boxShadow:
-                            "inset 1px 1px 0 0 rgba(255,255,255,0.1), inset -1px -1px 0 0 rgba(0,0,0,0.05)",
-                        }}
-                      />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" sideOffset={8}>
-                    {site.title}
-                  </TooltipContent>
-                </Tooltip>
-              ))}
+              {/* Draggable pinned sites */}
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={sites.map((s) => s.id)}
+                  strategy={horizontalListSortingStrategy}
+                >
+                  <div className="flex items-center gap-3">
+                    {sites.map((site) => (
+                      <SortableSite key={site.id} id={site.id}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              className="size-10 rounded-xl hover:brightness-110 flex items-center justify-center overflow-hidden transition-all duration-200 cursor-pointer active:cursor-grabbing shadow-sm hover:scale-110 hover:-translate-y-1 relative"
+                              style={{
+                                backgroundColor: site.backgroundColor ||
+                                  "rgba(255,255,255,1)",
+                              }}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleSiteClick(site.url);
+                              }}
+                              onContextMenu={(e) => {
+                                showContextMenu(e, [
+                                  {
+                                    id: "edit",
+                                    label: "Edit Site",
+                                    icon: <Pencil className="size-4 mr-2" />,
+                                    onClick: () =>
+                                      handleEdit(site),
+                                    separator: true,
+                                  },
+                                  {
+                                    id: "remove",
+                                    label: "Remove Site",
+                                    icon: <Trash2 className="size-4 mr-2" />,
+                                    variant: "destructive",
+                                    onClick: () =>
+                                      handleRemove(site.id),
+                                  },
+                                ]);
+                              }}
+                            >
+                              <img
+                                src={getFaviconUrl(site.url, 64)}
+                                alt={site.title}
+                                className="size-7 object-contain"
+                                loading="lazy"
+                              />
+                              {/* iOS-style gradient overlay + inner border */}
+                              <div
+                                className="absolute inset-0 pointer-events-none rounded-xl z-10"
+                                style={{
+                                  background:
+                                    "linear-gradient(to bottom, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%, rgba(0,0,0,0.15) 100%)",
+                                  boxShadow:
+                                    "inset 1px 1px 0 0 rgba(255,255,255,0.1), inset -1px -1px 0 0 rgba(0,0,0,0.05)",
+                                }}
+                              />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" sideOffset={8}>
+                            {site.title}
+                          </TooltipContent>
+                        </Tooltip>
+                      </SortableSite>
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
 
               {/* Divider before action buttons */}
               <div className="w-px h-8 bg-white/20 mx-1" />
@@ -185,16 +229,15 @@ export function PinnedSitesBar() {
                 <TooltipTrigger asChild>
                   <button
                     className="size-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all duration-200 cursor-pointer hover:scale-110 hover:-translate-y-1"
-                    onClick={() =>
-                      window.dispatchEvent(
-                        new Event("kiwi-open-widget-picker"),
-                      )}
+                    onClick={() => window.dispatchEvent(
+                      new Event("kiwi-open-widget-picker"),
+                    )}
                   >
-                    <SlidersHorizontal className="size-5 text-foreground/70" />
+                    <LayoutGrid className="size-5 text-foreground/70" />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="top" sideOffset={8}>
-                  Customize
+                  Widgets
                 </TooltipContent>
               </Tooltip>
 

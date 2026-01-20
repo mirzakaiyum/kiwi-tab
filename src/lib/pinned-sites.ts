@@ -16,10 +16,10 @@ export const DEFAULT_PINNED_SITES: PinnedSite[] = [
   { id: "2", url: "https://facebook.com", title: "Facebook" },
   { id: "3", url: "https://x.com", title: "X" },
   { id: "4", url: "https://reddit.com", title: "Reddit" },
-  { id: "5", url: "https://google.com", title: "Google" },
+  { id: "5", url: "https://instagram.com", title: "Instagram" },
   { id: "6", url: "https://amazon.com", title: "Amazon" },
   { id: "7", url: "https://netflix.com", title: "Netflix" },
-  { id: "8", url: "https://github.com", title: "GitHub" },
+  { id: "8", url: "https://web.whatsapp.com", title: "WhatsApp" },
 ];
 
 // Get favicon URL using Google's service
@@ -90,15 +90,16 @@ export async function loadPinnedSitesAsync(): Promise<PinnedSite[]> {
 export function updatePinnedSite(
   sites: PinnedSite[],
   id: string,
-  updates: Partial<Omit<PinnedSite, "id">>
+  updates: Partial<Omit<PinnedSite, "id">>,
 ): PinnedSite[] {
-  return sites.map((site) =>
-    site.id === id ? { ...site, ...updates } : site
-  );
+  return sites.map((site) => site.id === id ? { ...site, ...updates } : site);
 }
 
 // Remove a site (leaves slot empty by setting to null-like state)
-export function removePinnedSite(sites: PinnedSite[], id: string): PinnedSite[] {
+export function removePinnedSite(
+  sites: PinnedSite[],
+  id: string,
+): PinnedSite[] {
   return sites.filter((site) => site.id !== id);
 }
 
@@ -107,7 +108,7 @@ export function addPinnedSite(
   sites: PinnedSite[],
   url: string,
   title: string,
-  backgroundColor?: string
+  backgroundColor?: string,
 ): PinnedSite[] {
   if (sites.length >= MAX_PINNED_SITES) {
     return sites;
@@ -119,4 +120,16 @@ export function addPinnedSite(
     backgroundColor,
   };
   return [...sites, newSite];
+}
+
+// Reorder sites for drag-and-drop sorting
+export function reorderPinnedSites(
+  sites: PinnedSite[],
+  oldIndex: number,
+  newIndex: number,
+): PinnedSite[] {
+  const result = [...sites];
+  const [removed] = result.splice(oldIndex, 1);
+  result.splice(newIndex, 0, removed);
+  return result;
 }

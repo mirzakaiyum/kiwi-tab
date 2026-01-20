@@ -15,8 +15,8 @@ import {
   rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import { cn } from "@/lib/utils";
-import { WidgetWrapper } from "@/components/widget-wrapper";
-import { SortableWidget } from "@/components/sortable-widget";
+import { WidgetWrapper } from "@/components/widgetWrapper/widget-wrapper";
+import { SortableWidget } from "@/components/widgetWrapper/sortable-widget";
 import { ClockSettingsDialog, type ClockSettings } from "@/components/dialogs/clock-settings-dialog";
 import { DualClockSettingsDialog, type DualClockSettings } from "@/components/dialogs/dual-clock-settings-dialog";
 import { WeatherSettingsDialog } from "@/components/dialogs/weather-settings-dialog";

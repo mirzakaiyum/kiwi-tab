@@ -1,4 +1,4 @@
-import { Widget, WidgetContent } from "@/components/ui/widget";
+import { Widget, WidgetContent } from "@/components/widgetWrapper/widget";
 import { Label } from "@/components/ui/label";
 import { lazy } from "react";
 import { registerWidget } from "@/lib/widgets/registry";

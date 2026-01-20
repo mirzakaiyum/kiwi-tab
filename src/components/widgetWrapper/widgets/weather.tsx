@@ -6,7 +6,7 @@ import {
   Widget,
   WidgetContent,
   WidgetHeader,
-} from "@/components/ui/widget";
+} from "@/components/widgetWrapper/widget";
 import { Label } from "@/components/ui/label";
 import { registerWidget } from "@/lib/widgets/registry";
 import type { WeatherSettings } from "@/lib/widgets/types";
@@ -44,17 +44,22 @@ async function getCurrentPosition(): Promise<{ lat: number; lon: number }> {
       },
       (error) => {
         reject(error);
-      }
+      },
     );
   });
 }
 
-async function fetchWeather(city: string, unit: "C" | "F" = "C", autoDetect = false, coords?: { lat: number; lon: number }): Promise<WeatherData> {
+async function fetchWeather(
+  city: string,
+  unit: "C" | "F" = "C",
+  autoDetect = false,
+  coords?: { lat: number; lon: number },
+): Promise<WeatherData> {
   // If coordinates provided, use them. Else if autoDetect, use IP fallback (though logic below prefers coords). Steps:
   // 1. If coords: query = "lat,lon"
   // 2. Else if autoDetect: query = "auto:ip"
   // 3. Else: query = city
-  
+
   let query = city;
   if (coords) {
     query = `${coords.lat},${coords.lon}`;
@@ -62,20 +67,22 @@ async function fetchWeather(city: string, unit: "C" | "F" = "C", autoDetect = fa
     query = "auto:ip";
   }
 
-  const url = `${import.meta.env.VITE_WEATHER_API_URL}/?query=${encodeURIComponent(query)}&provider=auto&data=simple&lang=en&unit=${unit}`;
+  const url = `${import.meta.env.VITE_WEATHER_API_URL}/?query=${
+    encodeURIComponent(query)
+  }&provider=auto&data=simple&lang=en&unit=${unit}`;
   const response = await fetch(url);
-  
+
   if (!response.ok) {
     throw new Error("Failed to fetch weather data");
   }
-  
+
   const data = await response.json();
-  
+
   // Capitalize city name
-  const locationName = data.geo?.city 
+  const locationName = data.geo?.city
     ? data.geo.city.charAt(0).toUpperCase() + data.geo.city.slice(1)
     : city;
-  
+
   return {
     location: locationName,
     temperature: Math.round(data.now?.temp ?? 0),
@@ -86,9 +93,12 @@ async function fetchWeather(city: string, unit: "C" | "F" = "C", autoDetect = fa
   };
 }
 
-export default function WeatherWidget({ city = "Dhaka", unit = "C", autoDetect = false, preview = false }: WeatherWidgetProps) {
+export default function WeatherWidget(
+  { city = "Dhaka", unit = "C", autoDetect = false, preview = false }:
+    WeatherWidgetProps,
+) {
   // Cache key based on settings
-  const cacheKey = `weather-${autoDetect ? 'auto' : city}-${unit}`;
+  const cacheKey = `weather-${autoDetect ? "auto" : city}-${unit}`;
   const CACHE_TTL = 4 * 60 * 60 * 1000; // 4 hours
 
   // Initialize state from cache if available
@@ -140,25 +150,28 @@ export default function WeatherWidget({ city = "Dhaka", unit = "C", autoDetect =
     async function loadWeather() {
       try {
         let coords: { lat: number; lon: number } | undefined;
-        
+
         if (autoDetect) {
-           try {
-             coords = await getCurrentPosition();
-           } catch {
-             console.warn("Geolocation failed, falling back to IP");
-           }
+          try {
+            coords = await getCurrentPosition();
+          } catch {
+            console.warn("Geolocation failed, falling back to IP");
+          }
         }
-        
+
         const data = await fetchWeather(city, unit, autoDetect, coords);
         if (mounted) {
           setWeather(data);
           setError(null);
           // Save to cache
           try {
-            localStorage.setItem(cacheKey, JSON.stringify({
-              data,
-              timestamp: Date.now(),
-            }));
+            localStorage.setItem(
+              cacheKey,
+              JSON.stringify({
+                data,
+                timestamp: Date.now(),
+              }),
+            );
           } catch {
             // Ignore storage errors
           }
@@ -166,7 +179,9 @@ export default function WeatherWidget({ city = "Dhaka", unit = "C", autoDetect =
       } catch (err) {
         // Only set error if we have no cached data
         if (mounted && !weather) {
-          setError(err instanceof Error ? err.message : "Failed to load weather");
+          setError(
+            err instanceof Error ? err.message : "Failed to load weather",
+          );
         }
       }
     }
@@ -208,11 +223,16 @@ export default function WeatherWidget({ city = "Dhaka", unit = "C", autoDetect =
       <WidgetHeader className="flex-col gap-3">
         <div className="flex justify-between w-full">
           <div className="flex flex-col gap-x-2">
-            <Label className="font-light text-xs">{displayWeather.location}</Label>
-            <Label className="text-4xl font-light">{displayWeather.temperature}&deg;</Label>
+            <Label className="font-light text-xs">
+              {displayWeather.location}
+            </Label>
+            <Label className="text-4xl font-light">
+              {displayWeather.temperature}&deg;
+            </Label>
           </div>
           <Label className="text-xs text-muted-foreground text-end">
-            Feels Like <br/>{displayWeather.feelsLike}&deg;
+            Feels Like <br />
+            {displayWeather.feelsLike}&deg;
           </Label>
         </div>
       </WidgetHeader>

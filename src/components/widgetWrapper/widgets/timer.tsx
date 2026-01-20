@@ -15,7 +15,7 @@ import {
   WidgetContent,
   WidgetFooter,
   WidgetHeader,
-} from "@/components/ui/widget";
+} from "@/components/widgetWrapper/widget";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { registerWidget } from "@/lib/widgets/registry";
@@ -106,7 +106,7 @@ export default function TimerWidget() {
           onClick={resetTimer}
           variant="outline"
           size="icon-sm"
-          className="rounded-full"
+          className="rounded-full bg-transparent! border-border/80! hover:bg-input/10!"
         >
           <RotateCcw />
         </Button>
@@ -115,13 +115,11 @@ export default function TimerWidget() {
           onClick={handleToggle}
           variant="outline"
           size="icon-sm"
-          className="rounded-full"
+          className="rounded-full bg-transparent! border-border/80! hover:bg-input/10!"
         >
-          {isCountingDown ? (
-            <PauseIcon className="size-4 fill-current stroke-none" />
-          ) : (
-            <PlayIcon className="size-4 fill-current stroke-none" />
-          )}
+          {isCountingDown
+            ? <PauseIcon className="size-4 fill-current stroke-none" />
+            : <PlayIcon className="size-4 fill-current stroke-none" />}
         </Button>
       </WidgetFooter>
     </Widget>

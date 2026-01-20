@@ -9,25 +9,25 @@ import {
   WidgetFooter,
   WidgetHeader,
   WidgetTitle,
-} from "@/components/ui/widget";
+} from "@/components/widgetWrapper/widget";
 import { Label } from "@/components/ui/label";
 import { registerWidget } from "@/lib/widgets/registry";
 import type { SportsSettings } from "@/lib/widgets/types";
 import { Radio } from "lucide-react";
-import { getScoreboard, type ApiResponse } from "@/lib/services/sports";
+import { type ApiResponse, getScoreboard } from "@/lib/services/sports";
 
 // Helper function to parse and format cricket scores
 // Handles formats like "343 & 384/4" -> shows "343" smaller and "384" as main score
 function formatCricketScore(score: string | undefined): React.ReactNode {
   if (!score) return "-";
-  
+
   // Check if score contains "&" (multi-innings format)
   if (score.includes("&")) {
-    const parts = score.split("&").map(s => s.trim());
+    const parts = score.split("&").map((s) => s.trim());
     if (parts.length === 2) {
       const firstInnings = parts[0]; // e.g., "343"
       const secondInnings = parts[1]; // e.g., "384/4"
-      
+
       return (
         <span className="flex items-center gap-1">
           <span className="text-xs text-muted-foreground">{firstInnings}</span>
@@ -36,7 +36,7 @@ function formatCricketScore(score: string | undefined): React.ReactNode {
       );
     }
   }
-  
+
   return score;
 }
 
@@ -72,7 +72,7 @@ interface SportsWidgetProps {
 async function fetchSportsData(
   sport = "soccer",
   league?: string,
-  team?: string
+  team?: string,
 ): Promise<SportsData> {
   // Use local service instead of external API
   return getScoreboard(sport, league, team);
@@ -165,10 +165,13 @@ export default function SportsWidget({
           setError(null);
           // Save to cache with timestamp
           try {
-            localStorage.setItem(cacheKey, JSON.stringify({
-              data: result,
-              timestamp: Date.now(),
-            }));
+            localStorage.setItem(
+              cacheKey,
+              JSON.stringify({
+                data: result,
+                timestamp: Date.now(),
+              }),
+            );
           } catch {
             // Ignore storage errors
           }
@@ -203,8 +206,8 @@ export default function SportsWidget({
   const filteredMatches = React.useMemo(() => {
     if (!displayData?.matches) return [];
     if (!team) return displayData.matches;
-    
-    const selectedTeams = team.split(",").map(t => t.trim()).filter(Boolean);
+
+    const selectedTeams = team.split(",").map((t) => t.trim()).filter(Boolean);
     if (selectedTeams.length === 0) return displayData.matches;
 
     // Filter matches that involve ANY of the selected teams
@@ -215,12 +218,12 @@ export default function SportsWidget({
       const awayAbbrev = m.away.abbrev.toLowerCase();
       const homeName = m.home.name.toLowerCase();
       const awayName = m.away.name.toLowerCase();
-      
-      return selectedTeams.some(t => {
+
+      return selectedTeams.some((t) => {
         const tLower = t.toLowerCase();
-        return homeId === t || awayId === t || 
-               homeAbbrev === tLower || awayAbbrev === tLower ||
-               homeName.includes(tLower) || awayName.includes(tLower);
+        return homeId === t || awayId === t ||
+          homeAbbrev === tLower || awayAbbrev === tLower ||
+          homeName.includes(tLower) || awayName.includes(tLower);
       });
     });
 
@@ -236,18 +239,21 @@ export default function SportsWidget({
         const awayId = m.away.id.split("-")[0];
         const homeName = m.home.name.toLowerCase();
         const awayName = m.away.name.toLowerCase();
-        
+
         // Find the index of the PRIMARY selected team that triggered this match inclusion
         // If multiple selected teams are in the match (e.g. A vs B), return the lowest index (highest priority)
         let priority = Number.MAX_SAFE_INTEGER;
-        
+
         selectedTeams.forEach((t, index) => {
           const tLower = t.toLowerCase();
-          if (homeId === t || awayId === t || homeName.includes(tLower) || awayName.includes(tLower)) {
-             priority = Math.min(priority, index);
+          if (
+            homeId === t || awayId === t || homeName.includes(tLower) ||
+            awayName.includes(tLower)
+          ) {
+            priority = Math.min(priority, index);
           }
         });
-        
+
         return priority;
       };
 
@@ -289,25 +295,34 @@ export default function SportsWidget({
       <WidgetHeader>
         <WidgetTitle className="text-muted-foreground text-xs flex items-center justify-between w-full">
           {match.league}
-          {match.status === "ongoing" ? <Radio size={14} className="text-red-500" /> : null}
+          {match.status === "ongoing"
+            ? <Radio size={14} className="text-red-500" />
+            : null}
         </WidgetTitle>
       </WidgetHeader>
       <WidgetContent className="flex-col items-center gap-4">
         {matchTeams.map((team) => (
-          <div key={team.id} className="flex w-full items-center justify-between">
+          <div
+            key={team.id}
+            className="flex w-full items-center justify-between"
+          >
             <div className="flex items-center justify-start gap-2">
-              {team.logo ? (
-                <img
-                  src={team.logo}
-                  alt={team.abbrev}
-                  className="size-5 object-contain"
-                />
-              ) : (
-                <div className="size-5 flex items-center justify-center rounded bg-muted text-[10px] font-medium">
-                  {team.abbrev.slice(0, 2)}
-                </div>
-              )}
-              <Label className={`text-base ${team.turn ? "font-semibold" : ""}`}>
+              {team.logo
+                ? (
+                  <img
+                    src={team.logo}
+                    alt={team.abbrev}
+                    className="size-5 object-contain"
+                  />
+                )
+                : (
+                  <div className="size-5 flex items-center justify-center rounded bg-muted text-[10px] font-medium">
+                    {team.abbrev.slice(0, 2)}
+                  </div>
+                )}
+              <Label
+                className={`text-base ${team.turn ? "font-semibold" : ""}`}
+              >
                 {team.abbrev}
               </Label>
               {team.turn && (
@@ -315,7 +330,9 @@ export default function SportsWidget({
               )}
             </div>
             <div className="flex items-center justify-end gap-1">
-              <Label className="text-base">{formatCricketScore(team.score)}</Label>
+              <Label className="text-base">
+                {formatCricketScore(team.score)}
+              </Label>
             </div>
           </div>
         ))}

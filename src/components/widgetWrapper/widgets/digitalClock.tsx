@@ -7,7 +7,7 @@ import {
   Widget,
   WidgetContent,
   WidgetTitle,
-} from "@/components/ui/widget";
+} from "@/components/widgetWrapper/widget";
 import { Label } from "@/components/ui/label";
 import { registerWidget } from "@/lib/widgets";
 import type { ClockSettings } from "@/lib/widgets/types";
@@ -25,7 +25,9 @@ export default function DigitalClock({
 
   // Determine which timezone to use
   const currentTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const timezone = useCurrentLocation ? currentTimezone : (propTimezone || currentTimezone);
+  const timezone = useCurrentLocation
+    ? currentTimezone
+    : (propTimezone || currentTimezone);
 
   React.useEffect(() => {
     const timer = setInterval(() => {
@@ -59,7 +61,12 @@ export default function DigitalClock({
     const hour24Str = time.toLocaleString("en-US", hour24Options);
     const [timePart] = timeStr.split(" ");
     const [hours, minutes] = timePart.split(":");
-    return { day, hours: parseInt(hours), minutes, hour24: parseInt(hour24Str) };
+    return {
+      day,
+      hours: parseInt(hours),
+      minutes,
+      hour24: parseInt(hour24Str),
+    };
   };
 
   const { day, hours, minutes, hour24 } = getTimeInTimezone();

@@ -4,7 +4,7 @@ import {
   Widget,
   WidgetContent,
   WidgetTitle,
-} from "@/components/ui/widget";
+} from "@/components/widgetWrapper/widget";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 import { registerWidget } from "@/lib/widgets/registry";
@@ -47,7 +47,9 @@ export default function DualClock({
       <WidgetContent className="flex-col justify-between gap-3">
         <div className="flex w-full flex-col gap-2">
           <div className="flex w-full items-center justify-between">
-            <Label className="text-xs text-muted-foreground">{getCity(timezone1)}</Label>
+            <Label className="text-xs text-muted-foreground">
+              {getCity(timezone1)}
+            </Label>
           </div>
           <WidgetTitle className="text-xl font-medium tracking-tight">
             {formatTime(timezone1)}
@@ -56,7 +58,9 @@ export default function DualClock({
         <Separator className="opacity-50" />
         <div className="flex w-full flex-col gap-2">
           <div className="flex w-full items-center justify-between">
-            <Label className="text-xs text-muted-foreground">{getCity(timezone2)}</Label>
+            <Label className="text-xs text-muted-foreground">
+              {getCity(timezone2)}
+            </Label>
           </div>
           <WidgetTitle className="text-xl font-medium tracking-tight">
             {formatTime(timezone2)}

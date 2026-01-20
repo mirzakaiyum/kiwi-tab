@@ -9,7 +9,7 @@ import {
   WidgetFooter,
   WidgetHeader,
   WidgetTitle,
-} from "@/components/ui/widget";
+} from "@/components/widgetWrapper/widget";
 import { type ChartConfig, ChartContainer } from "@/components/ui/chart";
 import { Label } from "@/components/ui/label";
 

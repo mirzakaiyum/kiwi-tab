@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { lazy } from "react";
-import { Widget, WidgetContent } from "@/components/ui/widget";
+import { Widget, WidgetContent } from "@/components/widgetWrapper/widget";
 import { Label } from "@/components/ui/label";
 import { registerWidget } from "@/lib/widgets/registry";
 import type { ClockSettings } from "@/lib/widgets/types";
@@ -13,7 +13,7 @@ interface AnalogClockProps {
   variant?: string;
 }
 
-export default function AnalogClock({ 
+export default function AnalogClock({
   timezone: propTimezone,
   useCurrentLocation = true,
 }: AnalogClockProps) {
@@ -21,7 +21,9 @@ export default function AnalogClock({
 
   // Determine which timezone to use
   const currentTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const timezone = useCurrentLocation ? currentTimezone : (propTimezone || currentTimezone);
+  const timezone = useCurrentLocation
+    ? currentTimezone
+    : (propTimezone || currentTimezone);
 
   React.useEffect(() => {
     const timer = setInterval(() => {

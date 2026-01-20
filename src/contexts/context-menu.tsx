@@ -62,10 +62,10 @@ export function ContextMenuProvider({
     });
   }, []);
 
-  // Adjust position to keep menu in viewport
-  const getAdjustedPosition = React.useCallback(() => {
-    if (!menuState.position || !menuRef.current) {
-      return menuState.position;
+  // Adjust position to keep menu in viewport using useLayoutEffect
+  React.useLayoutEffect(() => {
+    if (!menuState.isOpen || !menuState.position || !menuRef.current) {
+      return;
     }
 
     const menu = menuRef.current;
@@ -75,49 +75,63 @@ export function ContextMenuProvider({
     const padding = 8;
 
     let { x, y } = menuState.position;
+    let adjusted = false;
 
     // Check horizontal position - flip to left if not enough space on right
     const spaceOnRight = viewportWidth - x;
     const spaceOnLeft = x;
+    const offset = 2; // Small offset to keep menu close to cursor
 
-    if (spaceOnRight < menuRect.width + padding) {
-      // Not enough space on right, try left
-      if (spaceOnLeft > spaceOnRight) {
-        // More space on left, open to the left of cursor
-        x = x - menuRect.width;
-      } else {
-        // Still not enough, align to right edge with padding
-        x = viewportWidth - menuRect.width - padding;
-      }
+    // If there's enough space on the right, don't adjust
+    if (spaceOnRight >= menuRect.width + padding) {
+      // Menu fits on the right, no adjustment needed
+    } else if (spaceOnLeft >= menuRect.width + padding) {
+      // Not enough space on right, but enough on left - flip to left
+      adjusted = true;
+      x = Math.max(padding, x - menuRect.width - offset);
+    } else {
+      // Not enough space on either side - align to right edge with padding
+      adjusted = true;
+      x = viewportWidth - menuRect.width - padding;
     }
 
     // Check vertical position - flip to top if not enough space on bottom
     const spaceOnBottom = viewportHeight - y;
     const spaceOnTop = y;
 
-    if (spaceOnBottom < menuRect.height + padding) {
-      // Not enough space on bottom, try top
-      if (spaceOnTop > spaceOnBottom) {
-        // More space on top, open above cursor
-        y = y - menuRect.height;
-      } else {
-        // Still not enough, align to bottom edge with padding
-        y = viewportHeight - menuRect.height - padding;
-      }
+    // If there's enough space on the bottom, don't adjust
+    if (spaceOnBottom >= menuRect.height + padding) {
+      // Menu fits on the bottom, no adjustment needed
+    } else if (spaceOnTop >= menuRect.height + padding) {
+      // Not enough space on bottom, but enough on top - flip to top
+      adjusted = true;
+      y = Math.max(padding, y - menuRect.height - offset);
+    } else {
+      // Not enough space on either side - align to bottom edge with padding
+      adjusted = true;
+      y = viewportHeight - menuRect.height - padding;
     }
 
     // Ensure menu doesn't go off left edge
     if (x < padding) {
+      adjusted = true;
       x = padding;
     }
 
     // Ensure menu doesn't go off top edge
     if (y < padding) {
+      adjusted = true;
       y = padding;
     }
 
-    return { x, y };
-  }, [menuState.position]);
+    // Only update if position changed
+    if (adjusted) {
+      setMenuState((prev) => ({
+        ...prev,
+        position: { x, y },
+      }));
+    }
+  }, [menuState.isOpen, menuState.position]);
 
   // Close menu on click outside
   React.useEffect(() => {
@@ -149,22 +163,20 @@ export function ContextMenuProvider({
     }
   }, [menuState.isOpen, hideContextMenu]);
 
-  const adjustedPosition = getAdjustedPosition();
-
   return (
     <ContextMenuContext.Provider value={{ showContextMenu, hideContextMenu }}>
       {children}
 
       {/* Global Context Menu */}
       {menuState.isOpen &&
-        adjustedPosition &&
+        menuState.position &&
         createPortal(
           <div
             ref={menuRef}
-            className="fixed z-50 min-w-32 overflow-hidden rounded-md border border-white/10 p-1 shadow-lg backdrop-blur-xl bg-black/40 dark:bg-black/60 text-popover-foreground animate-in fade-in-0 zoom-in-95"
+            className="fixed z-50 min-w-32 overflow-hidden rounded-md border border-white/10 p-1 shadow-lg bg-black/30 dark:bg-black text-popover-foreground animate-in fade-in-0 zoom-in-95"
             style={{
-              left: adjustedPosition.x,
-              top: adjustedPosition.y,
+              left: menuState.position.x,
+              top: menuState.position.y,
             }}
             onClick={(e) =>
               e.stopPropagation()}

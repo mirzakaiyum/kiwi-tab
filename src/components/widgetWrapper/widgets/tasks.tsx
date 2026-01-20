@@ -6,7 +6,7 @@ import {
   WidgetContent,
   WidgetHeader,
   WidgetTitle,
-} from "@/components/ui/widget";
+} from "@/components/widgetWrapper/widget";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 
@@ -51,11 +51,9 @@ export default function WidgetDemo() {
             key={todo.id}
           >
             <div className="hover:bg-muted group flex w-full items-center justify-start gap-2 rounded-md px-2 py-1.5 text-sm hover:cursor-pointer">
-              {todo.completed ? (
-                <CheckCircle2Icon className="text-productive size-4" />
-              ) : (
-                <CircleIcon className="text-muted-foreground size-4" />
-              )}
+              {todo.completed
+                ? <CheckCircle2Icon className="text-productive size-4" />
+                : <CircleIcon className="text-muted-foreground size-4" />}
               <Label
                 className={cn(
                   "text-muted-foreground group-hover:cursor-pointer",

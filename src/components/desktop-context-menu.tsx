@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { LayoutGrid, Lock, Pin, Settings, Shuffle, Unlock } from "lucide-react";
-import { useContextMenu } from "@/contexts/context-menu-context";
+import { useContextMenu } from "@/contexts/context-menu";
 
 export function DesktopContextMenu() {
     const { showContextMenu } = useContextMenu();

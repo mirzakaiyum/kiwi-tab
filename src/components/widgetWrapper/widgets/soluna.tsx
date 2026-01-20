@@ -1,17 +1,21 @@
 import * as React from "react";
 import { lazy } from "react";
-import { SunIcon, MoonIcon, Sunrise, Sunset, CloudSun } from "lucide-react";
+import { CloudSun, MoonIcon, SunIcon, Sunrise, Sunset } from "lucide-react";
 
 import {
   Widget,
   WidgetContent,
   WidgetHeader,
-} from "@/components/ui/widget";
+} from "@/components/widgetWrapper/widget";
 import { Label } from "@/components/ui/label";
 import { registerWidget } from "@/lib/widgets/registry";
-import { getSolunaData, type SolunaResponse, type CalculationMethodId } from "@/lib/services/soluna";
+import {
+  type CalculationMethodId,
+  getSolunaData,
+  type SolunaResponse,
+} from "@/lib/services/soluna";
 import { RadialChart } from "@/components/charts/radial-chart";
-import type { SolunaSettings, SolunaDisplayMode } from "@/lib/widgets/types";
+import type { SolunaDisplayMode, SolunaSettings } from "@/lib/widgets/types";
 
 interface SolunaWidgetProps {
   displayMode?: SolunaDisplayMode;
@@ -47,17 +51,17 @@ function getTimeRemaining(targetTime: string): string {
   const now = new Date();
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
   const targetMinutes = parseTimeToMinutes(targetTime);
-  
+
   if (targetMinutes < 0) return "";
-  
+
   let diffMinutes = targetMinutes - currentMinutes;
   if (diffMinutes < 0) {
     diffMinutes += 24 * 60; // Next day
   }
-  
+
   const hours = Math.floor(diffMinutes / 60);
   const minutes = diffMinutes % 60;
-  
+
   if (hours > 0) {
     return `In ${hours} hr, ${minutes} min`;
   }
@@ -86,8 +90,8 @@ function getCurrentAndNextPrayer(timings: SolunaResponse["prayer"]): {
 
   for (let i = 0; i < prayers.length; i++) {
     const prayerMinutes = parseTimeToMinutes(prayers[i].time);
-    const nextPrayerMinutes = i < prayers.length - 1 
-      ? parseTimeToMinutes(prayers[i + 1].time) 
+    const nextPrayerMinutes = i < prayers.length - 1
+      ? parseTimeToMinutes(prayers[i + 1].time)
       : parseTimeToMinutes(prayers[0].time) + 24 * 60; // Fajr next day
 
     if (currentMinutes >= prayerMinutes && currentMinutes < nextPrayerMinutes) {
@@ -128,32 +132,32 @@ function getPrayerIcon(prayerName: string): React.ReactNode {
 // Calculate progress percentage between current and next prayer
 function getProgressPercentage(
   currentPrayerTime: string,
-  nextPrayerTime: string
+  nextPrayerTime: string,
 ): number {
   const now = new Date();
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
-  
+
   let startMinutes = parseTimeToMinutes(currentPrayerTime);
   let endMinutes = parseTimeToMinutes(nextPrayerTime);
-  
+
   if (startMinutes < 0 || endMinutes < 0) return 0;
-  
+
   // Handle next day wrap-around (e.g., Isha -> Fajr)
   if (endMinutes <= startMinutes) {
     endMinutes += 24 * 60;
   }
-  
+
   // Adjust current time if it's before start (next day scenario)
   let adjustedCurrent = currentMinutes;
   if (currentMinutes < startMinutes) {
     adjustedCurrent += 24 * 60;
   }
-  
+
   const totalDuration = endMinutes - startMinutes;
   const elapsed = adjustedCurrent - startMinutes;
-  
+
   if (totalDuration <= 0) return 0;
-  
+
   return Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
 }
 
@@ -183,7 +187,7 @@ async function getCurrentPosition(): Promise<{ lat: number; lon: number }> {
       },
       (error) => {
         reject(error);
-      }
+      },
     );
   });
 }
@@ -197,22 +201,32 @@ export default function SolunaWidget({
 }: SolunaWidgetProps) {
   const [data, setData] = React.useState<SolunaResponse | null>(null);
   const [error, setError] = React.useState<string | null>(null);
-  const [, forceUpdate] = React.useReducer(x => x + 1, 0); // For live countdown
+  const [, forceUpdate] = React.useReducer((x) => x + 1, 0); // For live countdown
 
   // Preview data
   const previewData: SolunaResponse = React.useMemo(
     () => ({
-      meta: { 
-        latitude: 23.8, 
-        longitude: 90.4, 
+      meta: {
+        latitude: 23.8,
+        longitude: 90.4,
         timezone: "Asia/Dhaka",
-        method: { id: 1, name: "Karachi", params: {} }
+        method: { id: 1, name: "Karachi", params: {} },
       },
       date: {
         readable: "14 Jan 2026",
         timestamp: String(Date.now()),
-        hijri: { date: "15-06-1447", day: "15", month: { number: 6, en: "Jumada al-Thani", ar: "" }, year: "1447" },
-        gregorian: { date: "14-01-2026", day: "14", month: { number: 1, en: "January" }, year: "2026" },
+        hijri: {
+          date: "15-06-1447",
+          day: "15",
+          month: { number: 6, en: "Jumada al-Thani", ar: "" },
+          year: "1447",
+        },
+        gregorian: {
+          date: "14-01-2026",
+          day: "14",
+          month: { number: 1, en: "January" },
+          year: "2026",
+        },
       },
       prayer: {
         Fajr: "05:23",
@@ -235,7 +249,7 @@ export default function SolunaWidget({
       },
       moon: { phase: "Full Moon", hijriDay: 15 },
     }),
-    []
+    [],
   );
 
   React.useEffect(() => {
@@ -258,9 +272,9 @@ export default function SolunaWidget({
 
         const result = await getSolunaData(
           address,
-          Number(calculationMethod) as CalculationMethodId
+          Number(calculationMethod) as CalculationMethodId,
         );
-        
+
         if (mounted) {
           setData(result);
           setError(null);
@@ -286,7 +300,7 @@ export default function SolunaWidget({
   // Update countdown every minute
   React.useEffect(() => {
     if (preview || displayMode !== "prayer") return;
-    
+
     const interval = setInterval(forceUpdate, 60 * 1000);
     return () => clearInterval(interval);
   }, [preview, displayMode]);
@@ -319,24 +333,32 @@ export default function SolunaWidget({
   if (displayMode === "prayer") {
     const { current, next } = getCurrentAndNextPrayer(displayData.prayer);
     const timeUntilNext = next ? getTimeRemaining(next.time) : "";
-    const progress = current && next 
-      ? getProgressPercentage(current.time, next.time) 
+    const progress = current && next
+      ? getProgressPercentage(current.time, next.time)
       : 0;
-    
+
     return (
       <Widget>
         <WidgetHeader className="justify-between">
           <div className="flex flex-col">
-            <Label className="text-xs text-muted-foreground">{current?.name}</Label>
-            <Label className="text-2xl text-primary">{current ? formatTime(current.time) : "--:--"}</Label>
+            <Label className="text-xs text-muted-foreground">
+              {current?.name}
+            </Label>
+            <Label className="text-2xl text-primary">
+              {current ? formatTime(current.time) : "--:--"}
+            </Label>
           </div>
           {current && getPrayerIcon(current.name)}
         </WidgetHeader>
         <WidgetContent className="items-end justify-start gap-1">
-            <RadialChart progress={progress} />
+          <RadialChart progress={progress} />
           <div className="flex flex-col">
-            <Label className="text-sm">{next?.name}, {next ? formatTime(next.time) : "--:--"}</Label>
-            <Label className="text-xs text-muted-foreground">{timeUntilNext}</Label>
+            <Label className="text-sm">
+              {next?.name}, {next ? formatTime(next.time) : "--:--"}
+            </Label>
+            <Label className="text-xs text-muted-foreground">
+              {timeUntilNext}
+            </Label>
           </div>
         </WidgetContent>
       </Widget>
@@ -350,8 +372,12 @@ export default function SolunaWidget({
         <WidgetHeader className="flex-col gap-3">
           <div className="flex justify-between w-full">
             <div className="flex flex-col gap-x-2">
-              <Label className="font-light text-xs text-muted-foreground">Daylight</Label>
-              <Label className="text-xl font-light">{displayData.sun.daylength}</Label>
+              <Label className="font-light text-xs text-muted-foreground">
+                Daylight
+              </Label>
+              <Label className="text-xl font-light">
+                {displayData.sun.daylength}
+              </Label>
             </div>
             <SunIcon className="size-5 text-amber-400" />
           </div>
@@ -360,11 +386,15 @@ export default function SolunaWidget({
           <div className="flex w-full justify-between text-sm">
             <div className="flex flex-col">
               <Label className="text-xs text-muted-foreground">Sunrise</Label>
-              <Label className="text-md font-light">{formatTime(displayData.sun.sunrise)}</Label>
+              <Label className="text-md font-light">
+                {formatTime(displayData.sun.sunrise)}
+              </Label>
             </div>
             <div className="flex flex-col text-right">
               <Label className="text-xs text-muted-foreground">Sunset</Label>
-              <Label className="text-md font-light">{formatTime(displayData.sun.sunset)}</Label>
+              <Label className="text-md font-light">
+                {formatTime(displayData.sun.sunset)}
+              </Label>
             </div>
           </div>
         </WidgetContent>
@@ -380,9 +410,11 @@ export default function SolunaWidget({
         <WidgetContent className="flex-col">
           <div className="flex justify-between w-full">
             <div className="flex flex-col gap-x-2 items-center w-full">
-            <div className="text-3xl mb-2">{getMoonPhaseIcon(moonPhase)}</div>
+              <div className="text-3xl mb-2">{getMoonPhaseIcon(moonPhase)}</div>
               <Label className="text-xl font-light">{moonPhase}</Label>
-              <Label className="font-light text-xs text-muted-foreground">Moon Phase</Label>
+              <Label className="font-light text-xs text-muted-foreground">
+                Moon Phase
+              </Label>
             </div>
           </div>
         </WidgetContent>

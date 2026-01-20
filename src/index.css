@@ -137,12 +137,13 @@
   .gradient-border {
     position: relative;
     border: none !important;
+    overflow: hidden;
   }
   
   .gradient-border::before {
     content: '';
     position: absolute;
-    inset: 0;
+    inset: 0px;
     border-radius: inherit;
     padding: 1px;
     background: linear-gradient(
@@ -157,6 +158,7 @@
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;
+    z-index: 1;
   }
 
   /* Stronger variant for cards/widgets */

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { lazy, useCallback } from "react";
-import { Widget } from "@/components/ui/widget";
+import { Widget } from "@/components/widgetWrapper/widget";
 import { registerWidget } from "@/lib/widgets/registry";
 
 const STORAGE_KEY_PREFIX = "kiwi-sticky-note-";
@@ -15,11 +15,15 @@ interface StickyNoteWidgetProps {
   instanceId?: string;
 }
 
-export default function StickyNoteWidget({ instanceId }: StickyNoteWidgetProps) {
+export default function StickyNoteWidget(
+  { instanceId }: StickyNoteWidgetProps,
+) {
   const [note, setNote] = React.useState("");
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
-  const saveTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-  
+  const saveTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+
   // Create unique storage key for this instance
   const storageKey = `${STORAGE_KEY_PREFIX}${instanceId || "default"}`;
 

@@ -1,44 +1,44 @@
 // Re-export types
 export type {
   BaseWidgetProps,
-  WidgetMetadata,
-  WidgetDefinition,
-  WidgetInstance,
   ClockSettings,
   DualClockSettings,
-  WeatherSettings,
   SportsSettings,
+  WeatherSettings,
+  WidgetDefinition,
+  WidgetInstance,
+  WidgetMetadata,
 } from "./types";
 
 // Re-export registry functions
 export {
-  registerWidget,
-  getWidget,
-  getAllWidgets,
   getAllWidgetMetadata,
-  hasWidget,
+  getAllWidgets,
+  getWidget,
   getWidgetComponent,
-  getWidgetLazyComponent,
   getWidgetDefaultSettings,
+  getWidgetLazyComponent,
+  hasWidget,
+  registerWidget,
 } from "./registry";
 
 // Re-export settings manager functions
 export {
-  loadWidgets,
-  saveWidgets,
   createWidgetInstance,
-  updateWidgetSettings,
-  removeWidget,
   getWidgetSettings,
+  loadWidgets,
+  removeWidget,
+  saveWidgets,
+  updateWidgetSettings,
 } from "./settings-manager";
 
 // This file serves as the entry point that initializes the widget system
-import "@/components/widgets/calendar";
-import "@/components/widgets/analogClock";
-import "@/components/widgets/digitalClock";
-import "@/components/widgets/dualClock";
-import "@/components/widgets/timer";
-import "@/components/widgets/weather";
-import "@/components/widgets/sports";
-import "@/components/widgets/stickyNote";
-import "@/components/widgets/soluna";
+import "@/components/widgetWrapper/widgets/calendar";
+import "@/components/widgetWrapper/widgets/analogClock";
+import "@/components/widgetWrapper/widgets/digitalClock";
+import "@/components/widgetWrapper/widgets/dualClock";
+import "@/components/widgetWrapper/widgets/timer";
+import "@/components/widgetWrapper/widgets/weather";
+import "@/components/widgetWrapper/widgets/sports";
+import "@/components/widgetWrapper/widgets/stickyNote";
+import "@/components/widgetWrapper/widgets/soluna";
