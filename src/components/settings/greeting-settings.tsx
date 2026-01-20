@@ -1,95 +1,81 @@
-import { CircleHelp } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-  SettingsGroup,
-  SettingsItem,
-  SettingsItemWithInput,
-} from "@/components/settings/settings";
+import { SettingsGroup, SettingsItem } from "@/components/settings/settings";
 
-interface GreetingSettingsProps {
-  greetingEnabled: boolean;
-  onGreetingEnabledChange: (enabled: boolean) => void;
-  customGreeting: string;
-  onCustomGreetingChange: (greeting: string) => void;
-  customName: string;
-  onCustomNameChange: (name: string) => void;
-}
+const GREETING_ENABLED_KEY = "kiwi-greeting-enabled";
+const GREETING_STORAGE_KEY = "kiwi-greeting";
+const NAME_STORAGE_KEY = "kiwi-name";
 
-export function GreetingSettings({
-  greetingEnabled,
-  onGreetingEnabledChange,
-  customGreeting,
-  onCustomGreetingChange,
-  customName,
-  onCustomNameChange,
-}: GreetingSettingsProps) {
-  return (
-    <SettingsGroup title="Greeting">
-      {/* Enable Greetings Switch */}
-      <SettingsItem label="Enable Greetings">
-        <Switch
-          checked={greetingEnabled}
-          onCheckedChange={onGreetingEnabledChange}
-        />
-      </SettingsItem>
+export function GreetingSettings() {
+    // State
+    const [greetingEnabled, setGreetingEnabled] = useState(
+        () => localStorage.getItem(GREETING_ENABLED_KEY) !== "false",
+    );
+    const [customGreeting, setCustomGreeting] = useState(
+        () => localStorage.getItem(GREETING_STORAGE_KEY) || "",
+    );
+    const [customName, setCustomName] = useState(
+        () => localStorage.getItem(NAME_STORAGE_KEY) || "",
+    );
 
-      {/* Greeting Customization - only show if enabled */}
-      {greetingEnabled && (
-        <SettingsItemWithInput
-          label="Greeting"
-          tooltip={
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button className="outline-none">
-                  <CircleHelp className="size-3.5 text-muted-foreground cursor-help" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent className="border border-border bg-background text-foreground">
-                <p>Leave empty for time-based greeting</p>
-              </TooltipContent>
-            </Tooltip>
-          }
-        >
-          <Input
-            value={customGreeting}
-            onChange={(e) => onCustomGreetingChange(e.target.value)}
-            placeholder="Bonjour"
-            className="w-40 text-sm"
-          />
-        </SettingsItemWithInput>
-      )}
+    // Persist greeting enabled state
+    useEffect(() => {
+        localStorage.setItem(GREETING_ENABLED_KEY, String(greetingEnabled));
+        window.dispatchEvent(new Event("kiwi-settings-changed"));
+    }, [greetingEnabled]);
 
-      {/* Name Customization - only show if enabled */}
-      {greetingEnabled && (
-        <SettingsItemWithInput
-          label="Name"
-          tooltip={
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button className="outline-none">
-                  <CircleHelp className="size-3.5 text-muted-foreground cursor-help" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent className="border border-border bg-background text-foreground">
-                <p>Leave empty to show "there"</p>
-              </TooltipContent>
-            </Tooltip>
-          }
-        >
-          <Input
-            value={customName}
-            onChange={(e) => onCustomNameChange(e.target.value)}
-            placeholder="there"
-            className="w-40 text-sm"
-          />
-        </SettingsItemWithInput>
-      )}
-    </SettingsGroup>
-  );
+    // Persist greeting changes
+    useEffect(() => {
+        if (customGreeting) {
+            localStorage.setItem(GREETING_STORAGE_KEY, customGreeting);
+        } else {
+            localStorage.removeItem(GREETING_STORAGE_KEY);
+        }
+        window.dispatchEvent(new Event("kiwi-settings-changed"));
+    }, [customGreeting]);
+
+    // Persist name changes
+    useEffect(() => {
+        if (customName) {
+            localStorage.setItem(NAME_STORAGE_KEY, customName);
+        } else {
+            localStorage.removeItem(NAME_STORAGE_KEY);
+        }
+        window.dispatchEvent(new Event("kiwi-settings-changed"));
+    }, [customName]);
+
+    return (
+        <SettingsGroup title="Greeting">
+            {/* Enable Greetings Switch */}
+            <SettingsItem label="Enable Greetings">
+                <Switch
+                    checked={greetingEnabled}
+                    onCheckedChange={setGreetingEnabled}
+                />
+            </SettingsItem>
+
+            {/* Greeting and Name Customization - only show if enabled */}
+            {greetingEnabled && (
+                <SettingsItem label="Greeting">
+                    <Input
+                        value={customGreeting}
+                        onChange={(e) => setCustomGreeting(e.target.value)}
+                        placeholder="Bonjour"
+                        className="w-40 text-sm"
+                    />
+                </SettingsItem>
+            )}
+            {greetingEnabled && (
+                <SettingsItem label="Name">
+                    <Input
+                        value={customName}
+                        onChange={(e) => setCustomName(e.target.value)}
+                        placeholder="there"
+                        className="w-40 text-sm"
+                    />
+                </SettingsItem>
+            )}
+        </SettingsGroup>
+    );
 }

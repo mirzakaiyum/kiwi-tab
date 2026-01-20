@@ -3,11 +3,15 @@ import { getImageByUrl, images } from "./images";
 import { getVideoByUrl, videos } from "./videos";
 import { useCachedMedia } from "@/hooks/use-cached-media";
 import { BackgroundCredit } from "@/background/background-credit";
+import { getCustomFiles } from "@/lib/custom-files-db";
 
+const BACKGROUND_ENABLED_KEY = "kiwi-background-enabled";
 const BACKGROUND_TYPE_KEY = "kiwi-background-type";
 const BACKGROUND_FREQUENCY_KEY = "kiwi-background-frequency";
 const BACKGROUND_INDEX_KEY = "kiwi-background-index";
 const BACKGROUND_LAST_SHUFFLE_KEY = "kiwi-background-last-shuffle";
+const BACKGROUND_BLUR_KEY = "kiwi-background-blur";
+const BACKGROUND_BRIGHTNESS_KEY = "kiwi-background-brightness";
 
 type BackgroundFrequency = "tab" | "1hour" | "1day" | "1week";
 
@@ -33,13 +37,15 @@ function getFrequencyMs(freq: BackgroundFrequency): number {
 
 // Get background index based on frequency and type
 function getBackgroundIndex(): number {
-    const frequency = (localStorage.getItem(
-        BACKGROUND_FREQUENCY_KEY,
-    ) as BackgroundFrequency) || "tab";
-    const type = (localStorage.getItem(BACKGROUND_TYPE_KEY) as
-        | "none"
-        | "images"
-        | "videos") || "videos";
+    const frequency =
+        (localStorage.getItem(
+            BACKGROUND_FREQUENCY_KEY,
+        ) as BackgroundFrequency) || "tab";
+    const type =
+        (localStorage.getItem(BACKGROUND_TYPE_KEY) as
+            | "none"
+            | "images"
+            | "videos") || "videos";
     const lastShuffle = parseInt(
         localStorage.getItem(BACKGROUND_LAST_SHUFFLE_KEY) || "0",
     );
@@ -50,29 +56,33 @@ function getBackgroundIndex(): number {
 
     // Helper to find valid indices for current type
     const getValidIndices = () => {
-        return backgrounds
-            .map((bg, index) => ({ ...bg, index }))
-            // Map "images" -> "image" type, "videos" -> "video" type
-            .filter((bg) => {
-                if (type === "images") return bg.type === "image";
-                if (type === "videos") return bg.type === "video";
-                return true; // Fallback for mixed or undefined
-            })
-            .map((bg) => bg.index);
+        return (
+            backgrounds
+                .map((bg, index) => ({ ...bg, index }))
+                // Map "images" -> "image" type, "videos" -> "video" type
+                .filter((bg) => {
+                    if (type === "images") return bg.type === "image";
+                    if (type === "videos") return bg.type === "video";
+                    return true; // Fallback for mixed or undefined
+                })
+                .map((bg) => bg.index)
+        );
     };
 
     // If never shuffled or time to shuffle or forced (lastShuffle === 0)
     if (
-        savedIndex === -1 || lastShuffle === 0 ||
+        savedIndex === -1 ||
+        lastShuffle === 0 ||
         now - lastShuffle >= getFrequencyMs(frequency)
     ) {
         const validIndices = getValidIndices();
         if (validIndices.length === 0) return 0; // Fallback
 
         // Ensure we pick a different background if possible
-        const availableIndices = validIndices.length > 1
-            ? validIndices.filter((i) => i !== savedIndex)
-            : validIndices;
+        const availableIndices =
+            validIndices.length > 1
+                ? validIndices.filter((i) => i !== savedIndex)
+                : validIndices;
 
         const randomChoice = Math.floor(
             Math.random() * availableIndices.length,
@@ -122,11 +132,18 @@ interface BackgroundLayerProps {
     onLoad: (id: number) => void;
     onError: (id: number) => void;
     zIndex: number;
+    blur: number;
+    brightness: number;
 }
 
-function BackgroundLayer(
-    { data, onLoad, onError, zIndex }: BackgroundLayerProps,
-) {
+function BackgroundLayer({
+    data,
+    onLoad,
+    onError,
+    zIndex,
+    blur,
+    brightness,
+}: BackgroundLayerProps) {
     const { src: cachedUrl } = useCachedMedia(data.url, {
         enabled: data.type === "video",
     });
@@ -171,45 +188,62 @@ function BackgroundLayer(
                 zIndex: zIndex,
             }}
         >
-            {data.type === "video"
-                ? (
-                    <video
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                        className="h-full w-full object-cover"
-                        src={cachedUrl}
-                        onLoadedData={() => setLocalLoaded(true)}
-                        // Backup events
-                        onCanPlay={() => setLocalLoaded(true)}
-                        onError={() => onError(data.id)}
-                    />
-                )
-                : (
-                    <img
-                        src={cachedUrl}
-                        alt="Background"
-                        className="h-full w-full object-cover"
-                        onLoad={() => setLocalLoaded(true)}
-                        onError={() => onError(data.id)}
-                    />
-                )}
+            {data.type === "video" ? (
+                <video
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="h-full w-full object-cover"
+                    style={{ filter: `blur(${blur}px)` }}
+                    src={cachedUrl}
+                    onLoadedData={() => setLocalLoaded(true)}
+                    // Backup events
+                    onCanPlay={() => setLocalLoaded(true)}
+                    onError={() => onError(data.id)}
+                />
+            ) : (
+                <img
+                    src={cachedUrl}
+                    alt="Background"
+                    className="h-full w-full object-cover"
+                    style={{ filter: `blur(${blur}px)` }}
+                    onLoad={() => setLocalLoaded(true)}
+                    onError={() => onError(data.id)}
+                />
+            )}
             {/* Overlay */}
-            <div className="absolute inset-0 bg-black/50" />
+            <div
+                className="absolute inset-0"
+                style={{
+                    backgroundColor: `rgba(0, 0, 0, ${brightness / 100})`,
+                }}
+            />
         </div>
     );
 }
 
 // --- Main Background Component ---
 export function Background() {
+    const [backgroundEnabled, setBackgroundEnabled] = useState<boolean>(
+        () => localStorage.getItem(BACKGROUND_ENABLED_KEY) !== "false",
+    );
     const [backgroundType, setBackgroundType] = useState<
-        "none" | "images" | "videos"
-    >(() =>
-        (localStorage.getItem(BACKGROUND_TYPE_KEY) as
-            | "none"
-            | "images"
-            | "videos") || "videos"
+        "none" | "images" | "videos" | "custom"
+    >(
+        () =>
+            (localStorage.getItem(BACKGROUND_TYPE_KEY) as
+                | "none"
+                | "images"
+                | "videos"
+                | "custom") || "videos",
+    );
+
+    const [blur, setBlur] = useState<number>(() =>
+        parseInt(localStorage.getItem(BACKGROUND_BLUR_KEY) || "0"),
+    );
+    const [brightness, setBrightness] = useState<number>(() =>
+        parseInt(localStorage.getItem(BACKGROUND_BRIGHTNESS_KEY) || "50"),
     );
 
     // Queue of background layers.
@@ -220,15 +254,39 @@ export function Background() {
 
     // Initial Load
     useEffect(() => {
-        const index = getBackgroundIndex();
-        const bg = backgrounds[index];
-        if (bg) {
-            setLayers([{
-                id: nextId.current++,
-                url: bg.url,
-                type: bg.type,
-                loaded: false, // Will fade in on first load
-            }]);
+        // Check if using custom files
+        if (backgroundType === "custom") {
+            getCustomFiles().then((files) => {
+                if (files.length > 0) {
+                    // Pick a random custom file
+                    const randomIndex = Math.floor(
+                        Math.random() * files.length,
+                    );
+                    const file = files[randomIndex];
+                    const url = URL.createObjectURL(file.blob);
+                    setLayers([
+                        {
+                            id: nextId.current++,
+                            url,
+                            type: file.type,
+                            loaded: false,
+                        },
+                    ]);
+                }
+            });
+        } else {
+            const index = getBackgroundIndex();
+            const bg = backgrounds[index];
+            if (bg) {
+                setLayers([
+                    {
+                        id: nextId.current++,
+                        url: bg.url,
+                        type: bg.type,
+                        loaded: false, // Will fade in on first load
+                    },
+                ]);
+            }
         }
     }, []); // Run once on mount
 
@@ -257,8 +315,8 @@ export function Background() {
     const handleLayerLoad = useCallback((id: number) => {
         setLayers((prev) =>
             prev.map((layer) =>
-                layer.id === id ? { ...layer, loaded: true } : layer
-            )
+                layer.id === id ? { ...layer, loaded: true } : layer,
+            ),
         );
     }, []);
 
@@ -276,7 +334,7 @@ export function Background() {
             // We might just leave it (it might be hidden or showing broken generic icon).
             // But we mark it loaded so opacity sets to 1 (at least show something vs invisible).
             return prev.map((layer) =>
-                layer.id === id ? { ...layer, loaded: true } : layer
+                layer.id === id ? { ...layer, loaded: true } : layer,
             );
         });
     }, []);
@@ -284,45 +342,112 @@ export function Background() {
     // Listen for events
     useEffect(() => {
         const handleBackgroundChange = () => {
-            const type = (localStorage.getItem(BACKGROUND_TYPE_KEY) as
-                | "none"
-                | "images"
-                | "videos") || "videos";
+            const enabled =
+                localStorage.getItem(BACKGROUND_ENABLED_KEY) !== "false";
+            setBackgroundEnabled(enabled);
+
+            const type =
+                (localStorage.getItem(BACKGROUND_TYPE_KEY) as
+                    | "none"
+                    | "images"
+                    | "videos"
+                    | "custom") || "videos";
             setBackgroundType(type);
 
-            // Queue new background
-            const newIndex = getBackgroundIndex();
-            const newBg = backgrounds[newIndex];
-
-            if (newBg) {
-                setLayers((prev) => {
-                    // Avoid adding duplicate if already loading the same key?
-                    // But random might pick same if forced? (My logic prevents it usually)
-                    // Just add to queue.
-                    return [...prev, {
-                        id: nextId.current++,
-                        url: newBg.url,
-                        type: newBg.type,
-                        loaded: false,
-                    }];
+            // Update custom files from IndexedDB and queue new background if needed
+            if (type === "custom") {
+                getCustomFiles().then((files) => {
+                    if (files.length > 0) {
+                        const randomIndex = Math.floor(
+                            Math.random() * files.length,
+                        );
+                        const file = files[randomIndex];
+                        const url = URL.createObjectURL(file.blob);
+                        setLayers((prev) => [
+                            ...prev,
+                            {
+                                id: nextId.current++,
+                                url,
+                                type: file.type,
+                                loaded: false,
+                            },
+                        ]);
+                    }
                 });
             }
+
+            // Update blur and brightness
+            const newBlur = parseInt(
+                localStorage.getItem(BACKGROUND_BLUR_KEY) || "0",
+            );
+            const newBrightness = parseInt(
+                localStorage.getItem(BACKGROUND_BRIGHTNESS_KEY) || "50",
+            );
+            setBlur(newBlur);
+            setBrightness(newBrightness);
+
+            // Queue new background for non-custom types
+            if (type !== "custom") {
+                const newIndex = getBackgroundIndex();
+                const newBg = backgrounds[newIndex];
+
+                if (newBg) {
+                    setLayers((prev) => {
+                        // Avoid adding duplicate if already loading the same key?
+                        // But random might pick same if forced? (My logic prevents it usually)
+                        // Just add to queue.
+                        return [
+                            ...prev,
+                            {
+                                id: nextId.current++,
+                                url: newBg.url,
+                                type: newBg.type,
+                                loaded: false,
+                            },
+                        ];
+                    });
+                }
+            }
+        };
+
+        // Separate handler for style changes (blur/brightness) without shuffling
+        const handleStyleChange = () => {
+            const newBlur = parseInt(
+                localStorage.getItem(BACKGROUND_BLUR_KEY) || "0",
+            );
+            const newBrightness = parseInt(
+                localStorage.getItem(BACKGROUND_BRIGHTNESS_KEY) || "50",
+            );
+            setBlur(newBlur);
+            setBrightness(newBrightness);
         };
 
         window.addEventListener(
             "kiwi-background-changed",
             handleBackgroundChange,
         );
-        return () =>
+        window.addEventListener(
+            "kiwi-background-style-changed",
+            handleStyleChange,
+        );
+        return () => {
             window.removeEventListener(
                 "kiwi-background-changed",
                 handleBackgroundChange,
             );
+            window.removeEventListener(
+                "kiwi-background-style-changed",
+                handleStyleChange,
+            );
+        };
     }, []);
 
     // Resolve credit for the displayed layer
     const activeLayer = layers.find((l) => l.loaded)
-        ? layers.slice().reverse().find((l) => l.loaded)
+        ? layers
+              .slice()
+              .reverse()
+              .find((l) => l.loaded)
         : layers[0];
 
     const getCredit = () => {
@@ -331,24 +456,24 @@ export function Background() {
             const data = getImageByUrl(activeLayer.url);
             return data
                 ? {
-                    name: data.credit,
-                    link: data.creditLink,
-                    type: "Photo" as const,
-                    caption: data.caption,
-                    url: data.url,
-                }
+                      name: data.credit,
+                      link: data.creditLink,
+                      type: "Photo" as const,
+                      caption: data.caption,
+                      url: data.url,
+                  }
                 : null;
         }
         if (activeLayer.type === "video") {
             const data = getVideoByUrl(activeLayer.url);
             return data
                 ? {
-                    name: data.credit,
-                    link: data.creditLink,
-                    type: "Video" as const,
-                    caption: data.caption,
-                    url: data.url,
-                }
+                      name: data.credit,
+                      link: data.creditLink,
+                      type: "Video" as const,
+                      caption: data.caption,
+                      url: data.url,
+                  }
                 : null;
         }
         return null;
@@ -356,7 +481,7 @@ export function Background() {
 
     const credit = getCredit();
 
-    if (backgroundType === "none") {
+    if (!backgroundEnabled) {
         return <div className="fixed inset-0 -z-10 bg-background" />;
     }
 
@@ -370,6 +495,8 @@ export function Background() {
                         zIndex={index} // Stacking context: newer on top
                         onLoad={handleLayerLoad}
                         onError={handleLayerError}
+                        blur={blur}
+                        brightness={brightness}
                     />
                 ))}
             </div>
