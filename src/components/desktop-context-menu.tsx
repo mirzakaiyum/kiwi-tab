@@ -1,6 +1,25 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { LayoutGrid, Lock, Pin, Settings, Shuffle, Unlock } from "lucide-react";
 import { useContextMenu } from "@/contexts/context-menu";
+
+// Handle menu item clicks (static)
+const handleSettings = () => {
+    window.dispatchEvent(new CustomEvent("kiwi-open-settings"));
+};
+
+const handleAddWidget = () => {
+    window.dispatchEvent(new CustomEvent("kiwi-open-widget-picker"));
+};
+
+const handlePinSite = () => {
+    window.dispatchEvent(new CustomEvent("kiwi-open-pin-site-dialog"));
+};
+
+const handleChangeBackground = () => {
+    // Force a background shuffle by resetting the last shuffle time
+    localStorage.setItem("kiwi-background-last-shuffle", "0");
+    window.dispatchEvent(new Event("kiwi-background-changed"));
+};
 
 export function DesktopContextMenu() {
     const { showContextMenu } = useContextMenu();
@@ -8,26 +27,7 @@ export function DesktopContextMenu() {
         localStorage.getItem("kiwi-background-locked") === "true"
     );
 
-    // Handle menu item clicks
-    const handleSettings = () => {
-        window.dispatchEvent(new CustomEvent("kiwi-open-settings"));
-    };
-
-    const handleAddWidget = () => {
-        window.dispatchEvent(new CustomEvent("kiwi-open-widget-picker"));
-    };
-
-    const handlePinSite = () => {
-        window.dispatchEvent(new CustomEvent("kiwi-open-pin-site-dialog"));
-    };
-
-    const handleChangeBackground = () => {
-        // Force a background shuffle by resetting the last shuffle time
-        localStorage.setItem("kiwi-background-last-shuffle", "0");
-        window.dispatchEvent(new Event("kiwi-background-changed"));
-    };
-
-    const handleLockBackground = () => {
+    const handleLockBackground = useCallback(() => {
         const newLocked = !isLocked;
         setIsLocked(newLocked);
         if (newLocked) {
@@ -38,7 +38,7 @@ export function DesktopContextMenu() {
             localStorage.removeItem("kiwi-background-locked");
         }
         window.dispatchEvent(new Event("kiwi-background-changed"));
-    };
+    }, [isLocked]);
 
     // Sync locked state with localStorage
     useEffect(() => {
@@ -69,7 +69,7 @@ export function DesktopContextMenu() {
 
             // Show desktop menu if not clicking on interactive elements
             if (!isInteractive) {
-                showContextMenu(e as any, [
+                showContextMenu(e, [
                     {
                         id: "add-widget",
                         label: "Add Widget...",
@@ -116,7 +116,7 @@ export function DesktopContextMenu() {
         return () => {
             document.removeEventListener("contextmenu", handleContextMenuEvent);
         };
-    }, [isLocked, showContextMenu]);
+    }, [isLocked, showContextMenu, handleLockBackground]);
 
     return null;
 }

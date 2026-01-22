@@ -136,10 +136,13 @@ function getExperts(): Expert[] {
                     "Sparkles",
             }));
         }
-    } catch {}
+    } catch {
+        // Ignore JSON parse errors
+    }
     return DEFAULT_EXPERTS;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ChatboxProps {}
 
 export function Chatbox() {
@@ -190,7 +193,7 @@ export function Chatbox() {
         if (isSearchEngine && selectedExpert) {
             setSelectedExpert(null);
         }
-    }, [selectedModel, isSearchEngine]);
+    }, [selectedModel, isSearchEngine, selectedExpert]);
 
     // Persist experts list
     React.useEffect(() => {
@@ -615,7 +618,9 @@ async function fetchSuggestions(q: string): Promise<string[]> {
         if (Array.isArray(data?.[1]) && data[1].length > 0) {
             return data[1].slice(0, 3).map(String);
         }
-    } catch {}
+    } catch {
+        // Ignore fetch errors
+    }
 
     // Fallback: Wikipedia
     try {
@@ -628,7 +633,9 @@ async function fetchSuggestions(q: string): Promise<string[]> {
         if (data?.[1]?.length > 0) {
             return data[1];
         }
-    } catch {}
+    } catch {
+        // Ignore fetch errors
+    }
 
     // Local fallback
     return [q, `${q} news`, `${q} overview`].slice(0, 3);

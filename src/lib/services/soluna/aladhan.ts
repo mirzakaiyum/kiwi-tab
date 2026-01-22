@@ -3,7 +3,7 @@
  * Fetches prayer times from AlAdhan API with fallback URLs
  */
 
-import type { AlAdhan, QueryParams, SolunaResponse } from './types';
+import type { AlAdhanApiResponse, QueryParams, SolunaResponse } from './types';
 
 const BASE_URLS = [
   'https://api.aladhan.com/v1/timingsByAddress',
@@ -29,7 +29,7 @@ export async function getSolunaData(params: QueryParams): Promise<SolunaResponse
         throw new Error(`AlAdhan API error: ${response.status} ${response.statusText}`);
       }
 
-      const json: AlAdhan.ApiResponse = await response.json();
+      const json: AlAdhanApiResponse = await response.json();
 
       if (json.code !== 200) {
         throw new Error(`AlAdhan API returned error: ${json.status}`);

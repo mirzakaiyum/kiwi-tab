@@ -228,7 +228,7 @@ export function Background() {
     const [backgroundEnabled, setBackgroundEnabled] = useState<boolean>(
         () => localStorage.getItem(BACKGROUND_ENABLED_KEY) !== "false",
     );
-    const [backgroundType, setBackgroundType] = useState<
+    const [, setBackgroundType] = useState<
         "none" | "images" | "videos" | "custom"
     >(
         () =>
@@ -254,8 +254,15 @@ export function Background() {
 
     // Initial Load
     useEffect(() => {
+        const type =
+            (localStorage.getItem(BACKGROUND_TYPE_KEY) as
+                | "none"
+                | "images"
+                | "videos"
+                | "custom") || "videos";
+
         // Check if using custom files
-        if (backgroundType === "custom") {
+        if (type === "custom") {
             getCustomFiles().then((files) => {
                 if (files.length > 0) {
                     // Pick a random custom file

@@ -18,8 +18,10 @@ export interface WidgetMetadata {
 export interface WidgetDefinition<TSettings = unknown> {
   metadata: WidgetMetadata;
   // Direct import for grid rendering
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   component: ComponentType<any>;
   // Lazy import for picker preview
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   componentLazy: LazyExoticComponent<ComponentType<any>>;
   // Default settings if widget has configuration
   defaultSettings?: TSettings;

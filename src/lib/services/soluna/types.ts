@@ -63,54 +63,52 @@ export interface SolunaResponse {
 }
 
 // AlAdhan API response types
-export namespace AlAdhan {
-  export interface ApiResponse {
-    code: number;
-    status: string;
-    data: Data;
-  }
+export interface AlAdhanApiResponse {
+  code: number;
+  status: string;
+  data: AlAdhanData;
+}
 
-  export interface Data {
-    timings: {
-      Fajr: string;
-      Sunrise: string;
-      Dhuhr: string;
-      Asr: string;
-      Sunset: string;
-      Maghrib: string;
-      Isha: string;
-      Imsak: string;
-      Midnight: string;
-      Firstthird: string;
-      Lastthird: string;
+export interface AlAdhanData {
+  timings: {
+    Fajr: string;
+    Sunrise: string;
+    Dhuhr: string;
+    Asr: string;
+    Sunset: string;
+    Maghrib: string;
+    Isha: string;
+    Imsak: string;
+    Midnight: string;
+    Firstthird: string;
+    Lastthird: string;
+  };
+  date: {
+    readable: string;
+    timestamp: string;
+    hijri: {
+      date: string;
+      day: string;
+      month: { number: number; en: string; ar: string };
+      year: string;
     };
-    date: {
-      readable: string;
-      timestamp: string;
-      hijri: {
-        date: string;
-        day: string;
-        month: { number: number; en: string; ar: string };
-        year: string;
-      };
-      gregorian: {
-        date: string;
-        day: string;
-        month: { number: number; en: string };
-        year: string;
-      };
+    gregorian: {
+      date: string;
+      day: string;
+      month: { number: number; en: string };
+      year: string;
     };
-    meta: {
-      latitude: number;
-      longitude: number;
-      timezone: string;
-      method: {
-        id: number;
-        name: string;
-        params: Record<string, unknown>;
-      };
+  };
+  meta: {
+    latitude: number;
+    longitude: number;
+    timezone: string;
+    method: {
+      id: number;
+      name: string;
+      params: Record<string, unknown>;
     };
-  }
+  };
 }
 
 export const CALCULATION_METHODS: Record<CalculationMethodId, string> = {

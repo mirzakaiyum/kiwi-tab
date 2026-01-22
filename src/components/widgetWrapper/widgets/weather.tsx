@@ -93,13 +93,14 @@ async function fetchWeather(
   };
 }
 
+const CACHE_TTL = 4 * 60 * 60 * 1000; // 4 hours
+
 export default function WeatherWidget(
   { city = "Dhaka", unit = "C", autoDetect = false, preview = false }:
     WeatherWidgetProps,
 ) {
   // Cache key based on settings
   const cacheKey = `weather-${autoDetect ? "auto" : city}-${unit}`;
-  const CACHE_TTL = 4 * 60 * 60 * 1000; // 4 hours
 
   // Initialize state from cache if available
   const [weather, setWeather] = React.useState<WeatherData | null>(() => {
@@ -198,7 +199,7 @@ export default function WeatherWidget(
       mounted = false;
       clearInterval(interval);
     };
-  }, [city, unit, autoDetect, preview, cacheKey, isCacheFresh]);
+  }, [city, unit, autoDetect, preview, cacheKey, isCacheFresh, weather]);
 
   // Use preview data or fetched data
   const displayWeather = preview ? previewData : weather;

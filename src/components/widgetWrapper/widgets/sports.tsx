@@ -78,6 +78,8 @@ async function fetchSportsData(
   return getScoreboard(sport, league, team);
 }
 
+const CACHE_TTL = 60 * 1000; // 1 minute
+
 export default function SportsWidget({
   sport = "soccer",
   league = "eng.1",
@@ -86,7 +88,6 @@ export default function SportsWidget({
 }: SportsWidgetProps) {
   // Cache key based on settings
   const cacheKey = `kiwi-sports-${sport}-${league}-${team || "all"}`;
-  const CACHE_TTL = 60 * 1000; // 1 minute
 
   // Load initial data from localStorage cache
   const [data, setData] = React.useState<SportsData | null>(() => {
@@ -196,7 +197,7 @@ export default function SportsWidget({
       mounted = false;
       clearInterval(interval);
     };
-  }, [sport, league, team, preview, cacheKey]);
+  }, [sport, league, team, preview, cacheKey, data]);
 
   // Use fetched data, or placeholder if no data yet (preview mode always uses placeholder)
   const displayData = preview ? placeholderData : (data || placeholderData);
@@ -259,7 +260,7 @@ export default function SportsWidget({
 
       return getPriority(a) - getPriority(b);
     });
-  }, [displayData?.matches, team]);
+  }, [displayData, team]);
 
   // Select the first match from the sorted list
   const match = filteredMatches[0];

@@ -52,6 +52,7 @@ function getWidgetProps(widget: WidgetInstance): Record<string, unknown> {
 
 const MAX_WIDGETS = 8;
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface WidgetGridProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 const WidgetGrid = React.forwardRef<HTMLDivElement, WidgetGridProps>(

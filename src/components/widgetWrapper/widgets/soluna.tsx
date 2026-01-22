@@ -137,7 +137,7 @@ function getProgressPercentage(
   const now = new Date();
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
-  let startMinutes = parseTimeToMinutes(currentPrayerTime);
+  const startMinutes = parseTimeToMinutes(currentPrayerTime);
   let endMinutes = parseTimeToMinutes(nextPrayerTime);
 
   if (startMinutes < 0 || endMinutes < 0) return 0;
@@ -214,7 +214,7 @@ export default function SolunaWidget({
       },
       date: {
         readable: "14 Jan 2026",
-        timestamp: String(Date.now()),
+        timestamp: "1768435200000",
         hijri: {
           date: "15-06-1447",
           day: "15",
