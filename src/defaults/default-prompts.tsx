@@ -77,3 +77,4 @@ export const DEFAULT_EXPERTS: Expert[] = [
         icon: "Palette",
     },
 ];
+

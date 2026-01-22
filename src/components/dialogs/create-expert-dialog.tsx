@@ -1,16 +1,16 @@
 import * as React from "react";
 import {
     Dialog,
+    DialogClose,
     DialogContent,
+    DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogFooter,
-    DialogClose,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { type Expert } from "@/components/default-values";
+import { type Expert } from "@/defaults/default-prompts";
 
 export interface CreateExpertDialogProps {
     open: boolean;
@@ -42,9 +42,14 @@ export default function CreateExpertDialog({
         if (!name.trim()) return setError("Name is required");
         if (!prompt.trim()) return setError("Prompt is required");
         if (maxReached) return setError("Maximum experts reached");
-        
+
         const id = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-");
-        onSave({ id, name: name.trim(), prompt: prompt.trim(), icon: "Sparkles" });
+        onSave({
+            id,
+            name: name.trim(),
+            prompt: prompt.trim(),
+            icon: "Sparkles",
+        });
         onOpenChange(false);
     };
 
@@ -57,7 +62,9 @@ export default function CreateExpertDialog({
 
                 <div className="grid gap-4">
                     <div className="flex flex-col gap-2">
-                        <label className="text-xs opacity-60">Expert name</label>
+                        <label className="text-xs opacity-60">
+                            Expert name
+                        </label>
                         <Input
                             value={name}
                             onChange={(e) => setName(e.target.value)}
@@ -66,7 +73,9 @@ export default function CreateExpertDialog({
                         />
                     </div>
                     <div className="flex flex-col gap-2">
-                        <label className="text-xs opacity-60">System prompt</label>
+                        <label className="text-xs opacity-60">
+                            System prompt
+                        </label>
                         <Textarea
                             value={prompt}
                             onChange={(e) => setPrompt(e.target.value)}

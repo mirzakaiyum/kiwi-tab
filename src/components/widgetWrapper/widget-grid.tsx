@@ -1,7 +1,7 @@
 import * as React from "react";
 import {
-  DndContext,
   closestCenter,
+  DndContext,
   KeyboardSensor,
   PointerSensor,
   useSensor,
@@ -10,43 +10,53 @@ import {
 import type { DragEndEvent } from "@dnd-kit/core";
 import {
   arrayMove,
+  rectSortingStrategy,
   SortableContext,
   sortableKeyboardCoordinates,
-  rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import { cn } from "@/lib/utils";
 import { WidgetWrapper } from "@/components/widgetWrapper/widget-wrapper";
 import { SortableWidget } from "@/components/widgetWrapper/sortable-widget";
-import { ClockSettingsDialog, type ClockSettings } from "@/components/dialogs/clock-settings-dialog";
-import { DualClockSettingsDialog, type DualClockSettings } from "@/components/dialogs/dual-clock-settings-dialog";
+import {
+  type ClockSettings,
+  ClockSettingsDialog,
+} from "@/components/dialogs/clock-settings-dialog";
+import {
+  type DualClockSettings,
+  DualClockSettingsDialog,
+} from "@/components/dialogs/dual-clock-settings-dialog";
 import { WeatherSettingsDialog } from "@/components/dialogs/weather-settings-dialog";
 import { SportsSettingsDialog } from "@/components/dialogs/sports-settings-dialog";
 import { SolunaSettingsDialog } from "@/components/dialogs/soluna-settings-dialog";
-import type { WeatherSettings, SportsSettings, SolunaSettings } from "@/lib/widgets/types";
+import type {
+  SolunaSettings,
+  SportsSettings,
+  WeatherSettings,
+} from "@/lib/widgets/types";
 import {
+  createWidgetInstance,
   getWidget,
   getWidgetComponent,
   getWidgetDefaultSettings,
   loadWidgets,
-  saveWidgets,
-  createWidgetInstance,
-  updateWidgetSettings,
   removeWidget,
+  saveWidgets,
+  updateWidgetSettings,
   type WidgetInstance,
 } from "@/lib/widgets";
 import { DEFAULT_WIDGETS } from "@/lib/widgets/defaults";
 
 function getWidgetProps(widget: WidgetInstance): Record<string, unknown> {
-  const props: Record<string, unknown> = { 
+  const props: Record<string, unknown> = {
     variant: widget.variant,
     instanceId: widget.id,
   };
-  
+
   // Spread settings into props
   if (widget.settings) {
     Object.assign(props, widget.settings);
   }
-  
+
   return props;
 }
 
@@ -56,13 +66,18 @@ interface WidgetGridProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 const WidgetGrid = React.forwardRef<HTMLDivElement, WidgetGridProps>(
   ({ className, ...props }, ref) => {
-    const [widgets, setWidgets] = React.useState<WidgetInstance[]>(() => 
+    const [widgets, setWidgets] = React.useState<WidgetInstance[]>(() =>
       loadWidgets(DEFAULT_WIDGETS).slice(0, MAX_WIDGETS)
     );
-    const [settingsWidgetId, setSettingsWidgetId] = React.useState<string | null>(null);
+    const [widgetsEnabled, setWidgetsEnabled] = React.useState<boolean>(
+      () => localStorage.getItem("kiwi-widgets-enabled") !== "false",
+    );
+    const [settingsWidgetId, setSettingsWidgetId] = React.useState<
+      string | null
+    >(null);
 
-    const settingsWidget = settingsWidgetId 
-      ? widgets.find(w => w.id === settingsWidgetId) 
+    const settingsWidget = settingsWidgetId
+      ? widgets.find((w) => w.id === settingsWidgetId)
       : null;
 
     // Configure sensors for drag detection
@@ -74,7 +89,7 @@ const WidgetGrid = React.forwardRef<HTMLDivElement, WidgetGridProps>(
       }),
       useSensor(KeyboardSensor, {
         coordinateGetter: sortableKeyboardCoordinates,
-      })
+      }),
     );
 
     // Handle drag end - reorder widgets
@@ -97,20 +112,45 @@ const WidgetGrid = React.forwardRef<HTMLDivElement, WidgetGridProps>(
 
     // Listen for add widget events from settings panel
     React.useEffect(() => {
-      const handleAddWidget = (e: CustomEvent<{ type: string; variant: string }>) => {
+      const handleAddWidget = (
+        e: CustomEvent<{ type: string; variant: string }>,
+      ) => {
         setWidgets((prev) => {
           // Max widgets allowed
           if (prev.length >= MAX_WIDGETS) return prev;
-          
+
           const { type, variant } = e.detail;
           const newWidget = createWidgetInstance(type, variant);
           return [...prev, newWidget];
         });
       };
 
-      window.addEventListener("kiwi-add-widget", handleAddWidget as EventListener);
+      window.addEventListener(
+        "kiwi-add-widget",
+        handleAddWidget as EventListener,
+      );
       return () => {
-        window.removeEventListener("kiwi-add-widget", handleAddWidget as EventListener);
+        window.removeEventListener(
+          "kiwi-add-widget",
+          handleAddWidget as EventListener,
+        );
+      };
+    }, []);
+
+    // Listen for widgets enabled/disabled changes
+    React.useEffect(() => {
+      const handleWidgetsChanged = () => {
+        const enabled =
+          localStorage.getItem("kiwi-widgets-enabled") !== "false";
+        setWidgetsEnabled(enabled);
+      };
+
+      window.addEventListener("kiwi-widgets-changed", handleWidgetsChanged);
+      return () => {
+        window.removeEventListener(
+          "kiwi-widgets-changed",
+          handleWidgetsChanged,
+        );
       };
     }, []);
 
@@ -123,64 +163,85 @@ const WidgetGrid = React.forwardRef<HTMLDivElement, WidgetGridProps>(
     };
 
     const handleSaveClockSettings = (settings: ClockSettings) => {
-      setWidgets((prev) => updateWidgetSettings(prev, settingsWidgetId!, settings));
+      setWidgets((prev) =>
+        updateWidgetSettings(prev, settingsWidgetId!, settings)
+      );
       setSettingsWidgetId(null);
     };
 
     const handleSaveDualClockSettings = (settings: DualClockSettings) => {
-      setWidgets((prev) => updateWidgetSettings(prev, settingsWidgetId!, settings));
+      setWidgets((prev) =>
+        updateWidgetSettings(prev, settingsWidgetId!, settings)
+      );
       setSettingsWidgetId(null);
     };
 
     const handleSaveWeatherSettings = (settings: WeatherSettings) => {
-      setWidgets((prev) => updateWidgetSettings(prev, settingsWidgetId!, settings));
+      setWidgets((prev) =>
+        updateWidgetSettings(prev, settingsWidgetId!, settings)
+      );
       setSettingsWidgetId(null);
     };
 
     const handleSaveSportsSettings = (settings: SportsSettings) => {
-      setWidgets((prev) => updateWidgetSettings(prev, settingsWidgetId!, settings));
+      setWidgets((prev) =>
+        updateWidgetSettings(prev, settingsWidgetId!, settings)
+      );
       setSettingsWidgetId(null);
     };
 
     const handleSaveSolunaSettings = (settings: SolunaSettings) => {
-      setWidgets((prev) => updateWidgetSettings(prev, settingsWidgetId!, settings));
+      setWidgets((prev) =>
+        updateWidgetSettings(prev, settingsWidgetId!, settings)
+      );
       setSettingsWidgetId(null);
     };
 
     // Get default settings for dialogs
-    const defaultClockSettings: ClockSettings = (getWidgetDefaultSettings("analogClock") as unknown as ClockSettings) || {
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      useCurrentLocation: true,
-    };
+    const defaultClockSettings: ClockSettings =
+      (getWidgetDefaultSettings("analogClock") as unknown as ClockSettings) || {
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        useCurrentLocation: true,
+      };
 
-    const defaultDualClockSettings: DualClockSettings = (getWidgetDefaultSettings("dualClock") as unknown as DualClockSettings) || {
-      timezone1: "Europe/London",
-      timezone2: "America/New_York",
-    };
+    const defaultDualClockSettings: DualClockSettings =
+      (getWidgetDefaultSettings("dualClock") as unknown as DualClockSettings) ||
+      {
+        timezone1: "Europe/London",
+        timezone2: "America/New_York",
+      };
 
-    const defaultWeatherSettings: WeatherSettings = (getWidgetDefaultSettings("weather") as unknown as WeatherSettings) || {
-      city: "London",
-      unit: "C",
-      autoDetect: false,
-    };
+    const defaultWeatherSettings: WeatherSettings =
+      (getWidgetDefaultSettings("weather") as unknown as WeatherSettings) || {
+        city: "London",
+        unit: "C",
+        autoDetect: false,
+      };
 
-    const defaultSportsSettings: SportsSettings = (getWidgetDefaultSettings("sports") as unknown as SportsSettings) || {
-      sport: "soccer",
-      league: "eng.1",
-    };
+    const defaultSportsSettings: SportsSettings =
+      (getWidgetDefaultSettings("sports") as unknown as SportsSettings) || {
+        sport: "soccer",
+        league: "eng.1",
+      };
 
-    const defaultSolunaSettings: SolunaSettings = (getWidgetDefaultSettings("soluna") as unknown as SolunaSettings) || {
-      displayMode: "sun",
-      location: "London",
-      autoDetect: false,
-      calculationMethod: "1",
-    };
+    const defaultSolunaSettings: SolunaSettings =
+      (getWidgetDefaultSettings("soluna") as unknown as SolunaSettings) || {
+        displayMode: "sun",
+        location: "London",
+        autoDetect: false,
+        calculationMethod: "1",
+      };
 
     const gridClassName = cn(
       "w-full grid grid-cols-2 gap-3 md:grid-cols-4 transition-all duration-300 ease-in-out",
       widgets.length > 0 && "pt-8",
-      className
+      className,
     );
+
+    // Don't render anything if widgets are disabled
+    if (!widgetsEnabled) {
+      return null;
+    }
 
     return (
       <>
@@ -190,7 +251,7 @@ const WidgetGrid = React.forwardRef<HTMLDivElement, WidgetGridProps>(
           onDragEnd={handleDragEnd}
         >
           <SortableContext
-            items={widgets.map(w => w.id)}
+            items={widgets.map((w) => w.id)}
             strategy={rectSortingStrategy}
           >
             <div ref={ref} className={gridClassName} {...props}>
@@ -220,17 +281,23 @@ const WidgetGrid = React.forwardRef<HTMLDivElement, WidgetGridProps>(
 
         {/* Clock Settings Dialog (for both analog and digital clocks) */}
         <ClockSettingsDialog
-          open={settingsWidgetId !== null && (settingsWidget?.type === "analogClock" || settingsWidget?.type === "digitalClock")}
+          open={settingsWidgetId !== null &&
+            (settingsWidget?.type === "analogClock" ||
+              settingsWidget?.type === "digitalClock")}
           onOpenChange={(open) => !open && setSettingsWidgetId(null)}
-          settings={(settingsWidget?.settings as unknown as ClockSettings) || defaultClockSettings}
+          settings={(settingsWidget?.settings as unknown as ClockSettings) ||
+            defaultClockSettings}
           onSave={handleSaveClockSettings}
         />
 
         {/* Dual Clock Settings Dialog */}
         <DualClockSettingsDialog
-          open={settingsWidgetId !== null && settingsWidget?.type === "dualClock"}
+          open={settingsWidgetId !== null &&
+            settingsWidget?.type === "dualClock"}
           onOpenChange={(open) => !open && setSettingsWidgetId(null)}
-          settings={(settingsWidget?.settings as unknown as DualClockSettings) || defaultDualClockSettings}
+          settings={(settingsWidget
+            ?.settings as unknown as DualClockSettings) ||
+            defaultDualClockSettings}
           onSave={handleSaveDualClockSettings}
         />
 
@@ -238,7 +305,8 @@ const WidgetGrid = React.forwardRef<HTMLDivElement, WidgetGridProps>(
         <WeatherSettingsDialog
           open={settingsWidgetId !== null && settingsWidget?.type === "weather"}
           onOpenChange={(open) => !open && setSettingsWidgetId(null)}
-          settings={(settingsWidget?.settings as unknown as WeatherSettings) || defaultWeatherSettings}
+          settings={(settingsWidget?.settings as unknown as WeatherSettings) ||
+            defaultWeatherSettings}
           onSave={handleSaveWeatherSettings}
         />
 
@@ -246,7 +314,8 @@ const WidgetGrid = React.forwardRef<HTMLDivElement, WidgetGridProps>(
         <SportsSettingsDialog
           open={settingsWidgetId !== null && settingsWidget?.type === "sports"}
           onOpenChange={(open) => !open && setSettingsWidgetId(null)}
-          settings={(settingsWidget?.settings as unknown as SportsSettings) || defaultSportsSettings}
+          settings={(settingsWidget?.settings as unknown as SportsSettings) ||
+            defaultSportsSettings}
           onSave={handleSaveSportsSettings}
         />
 
@@ -254,12 +323,13 @@ const WidgetGrid = React.forwardRef<HTMLDivElement, WidgetGridProps>(
         <SolunaSettingsDialog
           open={settingsWidgetId !== null && settingsWidget?.type === "soluna"}
           onOpenChange={(open) => !open && setSettingsWidgetId(null)}
-          settings={(settingsWidget?.settings as unknown as SolunaSettings) || defaultSolunaSettings}
+          settings={(settingsWidget?.settings as unknown as SolunaSettings) ||
+            defaultSolunaSettings}
           onSave={handleSaveSolunaSettings}
         />
       </>
     );
-  }
+  },
 );
 
 WidgetGrid.displayName = "WidgetGrid";

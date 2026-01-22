@@ -12,6 +12,8 @@ import { GeneralSettings } from "@/components/settings/general-settings";
 import { GreetingSettings } from "@/components/settings/greeting-settings";
 import { BackgroundSettings } from "@/components/settings/background-settings";
 import { SearchAISettings } from "@/components/settings/search-ai-settings";
+import { WidgetSettings } from "@/components/settings/widget-settings";
+import { DockSettings } from "@/components/settings/dock-settings";
 import { FooterSettings } from "./footer-settings";
 
 export function SettingsButton() {
@@ -48,6 +50,8 @@ export function SettingsButton() {
                         <GreetingSettings />
                         <SearchAISettings />
                         <BackgroundSettings />
+                        <WidgetSettings />
+                        <DockSettings />
                         <FooterSettings />
                     </div>
                 </ScrollArea>

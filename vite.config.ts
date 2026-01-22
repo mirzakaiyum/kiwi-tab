@@ -1,9 +1,9 @@
-import path from "path"
-import tailwindcss from "@tailwindcss/vite"
-import react from "@vitejs/plugin-react"
-import { defineConfig } from "vite"
-import { viteStaticCopy } from "vite-plugin-static-copy"
-import packageJson from "./package.json"
+import path from "path";
+import tailwindcss from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
+import { viteStaticCopy } from "vite-plugin-static-copy";
+import packageJson from "./package.json";
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -11,16 +11,25 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify(packageJson.version),
   },
   plugins: [
-    react(), 
+    react(),
     tailwindcss(),
     viteStaticCopy({
       targets: [
         {
           src: "manifest.json",
-          dest: "."
-        }
-      ]
-    })
+          dest: ".",
+          transform: (content) => {
+            const manifest = JSON.parse(content.toString());
+            manifest.version = packageJson.version;
+            return JSON.stringify(manifest, null, 2);
+          },
+        },
+        {
+          src: "PRIVACY.md",
+          dest: ".",
+        },
+      ],
+    }),
   ],
   resolve: {
     alias: {
@@ -32,15 +41,15 @@ export default defineConfig({
       output: {
         manualChunks: {
           // Split React into its own chunk
-          'vendor-react': ['react', 'react-dom'],
+          "vendor-react": ["react", "react-dom"],
           // Split animation library
-          'vendor-motion': ['framer-motion'],
+          "vendor-motion": ["framer-motion"],
           // Split icon libraries
-          'vendor-icons': ['lucide-react', 'react-icons'],
+          "vendor-icons": ["lucide-react", "react-icons"],
           // Split UI component libraries
-          'vendor-ui': ['@radix-ui/react-label', 'cmdk', 'vaul'],
+          "vendor-ui": ["@radix-ui/react-label", "cmdk", "vaul"],
         },
       },
     },
   },
-})
+});

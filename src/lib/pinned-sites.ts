@@ -1,26 +1,12 @@
-// Pinned Sites Storage Utilities
+import {
+  DEFAULT_PINNED_SITES,
+  type PinnedSite,
+} from "@/defaults/default-pinSite";
 
-export interface PinnedSite {
-  id: string;
-  url: string;
-  title: string;
-  backgroundColor?: string;
-}
+export type { PinnedSite };
 
 const STORAGE_KEY = "kiwi-pinned-sites";
 const MAX_PINNED_SITES = 16;
-
-// Default popular sites
-export const DEFAULT_PINNED_SITES: PinnedSite[] = [
-  { id: "1", url: "https://youtube.com", title: "YouTube" },
-  { id: "2", url: "https://facebook.com", title: "Facebook" },
-  { id: "3", url: "https://x.com", title: "X" },
-  { id: "4", url: "https://reddit.com", title: "Reddit" },
-  { id: "5", url: "https://instagram.com", title: "Instagram" },
-  { id: "6", url: "https://amazon.com", title: "Amazon" },
-  { id: "7", url: "https://netflix.com", title: "Netflix" },
-  { id: "8", url: "https://web.whatsapp.com", title: "WhatsApp" },
-];
 
 // Get favicon URL using Google's service
 export function getFaviconUrl(url: string, size: number = 64): string {

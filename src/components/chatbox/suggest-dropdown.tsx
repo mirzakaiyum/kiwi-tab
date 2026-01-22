@@ -1,5 +1,15 @@
 import * as React from "react";
-import { Plus, CornerDownLeft, Search, Sparkles, Code, GraduationCap, Heart, Palette, type LucideIcon } from "lucide-react";
+import {
+    Code,
+    CornerDownLeft,
+    GraduationCap,
+    Heart,
+    type LucideIcon,
+    Palette,
+    Plus,
+    Search,
+    Sparkles,
+} from "lucide-react";
 import CreateShortcutDialog from "@/components/dialogs/create-shortcut-dialog";
 import {
     Command,
@@ -9,7 +19,11 @@ import {
     CommandSeparator,
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
-import { DEFAULT_SHORTCUTS, type UserShortcut, type Expert } from "@/components/default-values";
+import {
+    DEFAULT_SHORTCUTS,
+    type Expert,
+    type UserShortcut,
+} from "@/defaults/default-prompts";
 
 // Icon mapping for experts
 const EXPERT_ICONS: Record<string, LucideIcon> = {
@@ -49,7 +63,9 @@ export function SuggestDropdown({
     onShortcutChange,
     onHoverIndex,
 }: SuggestDropdownProps) {
-    const [userShortcuts, setUserShortcuts] = React.useState<UserShortcut[]>([]);
+    const [userShortcuts, setUserShortcuts] = React.useState<UserShortcut[]>(
+        [],
+    );
     const [createOpen, setCreateOpen] = React.useState(false);
 
     // Load shortcuts from localStorage on mount
@@ -60,7 +76,10 @@ export function SuggestDropdown({
                 const parsed: UserShortcut[] = JSON.parse(raw);
                 setUserShortcuts(parsed.slice(0, 6));
             } else {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_SHORTCUTS));
+                localStorage.setItem(
+                    STORAGE_KEY,
+                    JSON.stringify(DEFAULT_SHORTCUTS),
+                );
                 setUserShortcuts(DEFAULT_SHORTCUTS);
             }
         } catch {
@@ -94,8 +113,8 @@ export function SuggestDropdown({
     const filteredShortcuts = React.useMemo(() => {
         if (!query.startsWith("/")) return userShortcuts;
         const searchTerm = query.toLowerCase();
-        return userShortcuts.filter((s) => 
-            s.name.toLowerCase().includes(searchTerm) || 
+        return userShortcuts.filter((s) =>
+            s.name.toLowerCase().includes(searchTerm) ||
             s.id.toLowerCase().includes(searchTerm.slice(1))
         );
     }, [query, userShortcuts]);
@@ -104,8 +123,8 @@ export function SuggestDropdown({
     const filteredExperts = React.useMemo(() => {
         if (!query.startsWith("@")) return experts;
         const searchTerm = query.slice(1).toLowerCase();
-        return experts.filter((e) => 
-            e.name.toLowerCase().includes(searchTerm) || 
+        return experts.filter((e) =>
+            e.name.toLowerCase().includes(searchTerm) ||
             e.id.toLowerCase().includes(searchTerm)
         );
     }, [query, experts]);
@@ -113,34 +132,53 @@ export function SuggestDropdown({
     // Determine mode and active list
     const isShortcutMode = query.startsWith("/");
     const isExpertMode = !disableExperts && query.startsWith("@");
-    const activeList = isShortcutMode ? filteredShortcuts : isExpertMode ? filteredExperts : [];
-    
+    const activeList = isShortcutMode
+        ? filteredShortcuts
+        : isExpertMode
+        ? filteredExperts
+        : [];
+
     // Calculate safe index that stays within bounds
-    const safeIndex = activeList.length > 0 
-        ? Math.min(selectedIndex, activeList.length - 1) 
+    const safeIndex = activeList.length > 0
+        ? Math.min(selectedIndex, activeList.length - 1)
         : 0;
 
     // Notify parent of selected item for Enter key selection
     React.useEffect(() => {
         if (isShortcutMode && filteredShortcuts.length > 0) {
-            onShortcutChange?.(filteredShortcuts[safeIndex].prompt, filteredShortcuts.length);
+            onShortcutChange?.(
+                filteredShortcuts[safeIndex].prompt,
+                filteredShortcuts.length,
+            );
         } else if (isExpertMode && filteredExperts.length > 0) {
-            onShortcutChange?.(filteredExperts[safeIndex].id, filteredExperts.length);
+            onShortcutChange?.(
+                filteredExperts[safeIndex].id,
+                filteredExperts.length,
+            );
         } else {
             onShortcutChange?.(null, 0);
         }
-    }, [filteredShortcuts, filteredExperts, isShortcutMode, isExpertMode, safeIndex, onShortcutChange]);
+    }, [
+        filteredShortcuts,
+        filteredExperts,
+        isShortcutMode,
+        isExpertMode,
+        safeIndex,
+        onShortcutChange,
+    ]);
 
     if (!visible) return null;
 
-    const showShortcuts = !searchLoading && searchSuggestions.length === 0 && !isExpertMode;
+    const showShortcuts = !searchLoading && searchSuggestions.length === 0 &&
+        !isExpertMode;
 
     return (
         <div className="bg-input border-border animate-in fade-in slide-in-from-top-1 absolute top-full -left-px -right-px z-30 rounded-b-xl border overflow-hidden shadow-md p-1">
             <Command className="bg-transparent">
                 <CommandList className="max-h-none">
                     {/* Loading state */}
-                    {searchLoading && searchSuggestions.length === 0 && !isExpertMode && !isShortcutMode && (
+                    {searchLoading && searchSuggestions.length === 0 &&
+                        !isExpertMode && !isShortcutMode && (
                         <CommandGroup heading="Suggestions">
                             <CommandItem className="gap-3 text-muted-foreground/60">
                                 Loading...
@@ -149,7 +187,8 @@ export function SuggestDropdown({
                     )}
 
                     {/* Search suggestions */}
-                    {!searchLoading && searchSuggestions.length > 0 && !isExpertMode && !isShortcutMode && (
+                    {!searchLoading && searchSuggestions.length > 0 &&
+                        !isExpertMode && !isShortcutMode && (
                         <CommandGroup heading="Suggestions">
                             {searchSuggestions.slice(0, 3).map((s) => (
                                 <CommandItem
@@ -171,20 +210,27 @@ export function SuggestDropdown({
                     {showShortcuts && (
                         <CommandGroup heading="Shortcuts">
                             {filteredShortcuts.map((u, index) => {
-                                const isSelected = isShortcutMode && index === safeIndex;
+                                const isSelected = isShortcutMode &&
+                                    index === safeIndex;
                                 return (
                                     <CommandItem
                                         key={u.id}
-                                        onSelect={() => onSelectSuggestion?.(u.prompt)}
-                                        onMouseEnter={() => isShortcutMode && onHoverIndex?.(index)}
+                                        onSelect={() =>
+                                            onSelectSuggestion?.(u.prompt)}
+                                        onMouseEnter={() =>
+                                            isShortcutMode &&
+                                            onHoverIndex?.(index)}
                                         className={cn(
                                             "gap-3 justify-between",
                                             // Override cmdk's data-selected when in filter mode
-                                            isShortcutMode && "data-[selected=true]:bg-transparent",
-                                            isSelected && "bg-muted!"
+                                            isShortcutMode &&
+                                                "data-[selected=true]:bg-transparent",
+                                            isSelected && "bg-muted!",
                                         )}
                                     >
-                                        <span className="font-medium">{u.name}</span>
+                                        <span className="font-medium">
+                                            {u.name}
+                                        </span>
                                         {isSelected && (
                                             <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                                                 <span>Press</span>
@@ -204,22 +250,32 @@ export function SuggestDropdown({
                         <CommandGroup heading="Experts">
                             {filteredExperts.map((e, index) => {
                                 const isSelected = index === safeIndex;
-                                const IconComponent = EXPERT_ICONS[e.icon] || Sparkles;
+                                const IconComponent = EXPERT_ICONS[e.icon] ||
+                                    Sparkles;
                                 return (
                                     <CommandItem
                                         key={e.id}
                                         onSelect={() => onSelectExpert?.(e)}
-                                        onMouseEnter={() => onHoverIndex?.(index)}
+                                        onMouseEnter={() =>
+                                            onHoverIndex?.(index)}
                                         className={cn(
                                             "gap-3 justify-between",
                                             // Override cmdk's data-selected when in expert mode
                                             "data-[selected=true]:bg-transparent",
-                                            isSelected && "bg-muted!"
+                                            isSelected && "bg-muted!",
                                         )}
                                     >
                                         <div className="flex items-center gap-2">
                                             <IconComponent className="size-4 text-muted-foreground/60" />
-                                            <span className="text-foreground">{e.name}{isSelected && <span className="text-foreground/30 ml-2 text-xs font-light">— Add this expert to this chat</span>}</span>
+                                            <span className="text-foreground">
+                                                {e.name}
+                                                {isSelected && (
+                                                    <span className="text-foreground/30 ml-2 text-xs font-light">
+                                                        — Add this expert to
+                                                        this chat
+                                                    </span>
+                                                )}
+                                            </span>
                                         </div>
                                         {isSelected && (
                                             <span className="flex items-center gap-1.5 text-xs text-muted-foreground">

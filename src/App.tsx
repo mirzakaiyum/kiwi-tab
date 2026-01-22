@@ -12,7 +12,7 @@ import { DesktopContextMenu } from "./components/desktop-context-menu";
 // Lazy-load deferred components (not critical for initial render)
 const Settings = lazy(() => import("./components/settings/settings-panel"));
 const Customize = lazy(
-    () => import("./components/widgetWrapper/customize-widgets"),
+    () => import("./components/widgetWrapper/widgets-picker"),
 );
 
 export function App() {

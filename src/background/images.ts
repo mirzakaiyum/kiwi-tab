@@ -26,7 +26,7 @@ export const Images: ImageCollection = {
     parameters: "?auto=compress&cs=tinysrgb&dpr=1&w=1920",
     imageIds: [
       {
-        id: "1350197",
+        id: "1350197", // Blue water
         caption: "Close-up Photo of Water",
         filename: "pexels-photo-1350197.jpeg",
         url: "https://www.pexels.com/photo/close-up-photo-of-water-1350197",
@@ -34,7 +34,7 @@ export const Images: ImageCollection = {
         creditLink: "https://www.pexels.com/@earano",
       },
       {
-        id: "1631677",
+        id: "1631677", // Golden Hour
         caption: "Calm Body Of Water During Golden Hour",
         filename: "pexels-photo-1631677.jpeg",
         url:
@@ -43,7 +43,7 @@ export const Images: ImageCollection = {
         creditLink: "https://www.pexels.com/@abdghat",
       },
       {
-        id: "268533",
+        id: "268533", // Night Sky with Tree
         caption: "Green Tree",
         filename: "pexels-photo-268533.jpeg",
         url: "https://www.pexels.com/photo/green-tree-268533",
@@ -51,7 +51,7 @@ export const Images: ImageCollection = {
         creditLink: "https://www.pexels.com/@pixabay",
       },
       {
-        id: "2850287",
+        id: "2850287", // Boat on Horizon
         caption: "Two Person on Boat in Body of Water during Golden Hour",
         filename: "pexels-photo-2850287.jpeg",
         url:

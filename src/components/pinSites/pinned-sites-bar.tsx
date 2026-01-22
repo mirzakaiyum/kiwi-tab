@@ -1,4 +1,5 @@
 import React from "react";
+import { cn } from "@/lib/utils";
 
 import {
   closestCenter,
@@ -13,6 +14,7 @@ import {
   horizontalListSortingStrategy,
   SortableContext,
   sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import {
   Tooltip,
@@ -42,6 +44,7 @@ import {
 } from "@/lib/pinned-sites";
 import { LayoutGrid, Pencil, Plus, Settings, Trash2 } from "lucide-react";
 import { useContextMenu } from "@/contexts/context-menu";
+import type { DockPosition } from "@/components/settings/dock-settings";
 
 const MAX_PINNED_SITES = 16;
 
@@ -49,6 +52,13 @@ export function PinnedSitesBar() {
   const { showContextMenu } = useContextMenu();
   const [sites, setSites] = React.useState<PinnedSite[]>(() =>
     loadPinnedSites()
+  );
+  const [dockEnabled, setDockEnabled] = React.useState<boolean>(
+    () => localStorage.getItem("kiwi-dock-enabled") !== "false",
+  );
+  const [dockPosition, setDockPosition] = React.useState<DockPosition>(
+    () =>
+      (localStorage.getItem("kiwi-dock-position") as DockPosition) || "bottom",
   );
   const [editingSite, setEditingSite] = React.useState<PinnedSite | null>(null);
   const [isAdding, setIsAdding] = React.useState(false);
@@ -97,6 +107,23 @@ export function PinnedSitesBar() {
       );
   }, []);
 
+  // Listen for dock enabled/disabled changes
+  React.useEffect(() => {
+    const handleDockChanged = () => {
+      const enabled = localStorage.getItem("kiwi-dock-enabled") !== "false";
+      setDockEnabled(enabled);
+      const position =
+        (localStorage.getItem("kiwi-dock-position") as DockPosition) ||
+        "bottom";
+      setDockPosition(position);
+    };
+
+    window.addEventListener("kiwi-dock-changed", handleDockChanged);
+    return () => {
+      window.removeEventListener("kiwi-dock-changed", handleDockChanged);
+    };
+  }, []);
+
   const handleEdit = (site: PinnedSite) => {
     setEditingSite(site);
   };
@@ -132,14 +159,81 @@ export function PinnedSitesBar() {
   // Check if we can add more sites (for showing context menu)
   const canAddSite = sites.length < MAX_PINNED_SITES;
 
+  // Don't render anything if dock is disabled
+  if (!dockEnabled) {
+    return null;
+  }
+
+  // Determine container classes based on position
+  const getContainerClasses = () => {
+    switch (dockPosition) {
+      case "left":
+        return "fixed left-2 top-1/2 -translate-y-1/2 z-50";
+      case "right":
+        return "fixed right-2 top-1/2 -translate-y-1/2 z-50";
+      case "bottom":
+      default:
+        return "fixed bottom-2 left-1/2 -translate-x-1/2 z-50";
+    }
+  };
+
+  // Determine flex direction based on position
+  const isVertical = dockPosition === "left" || dockPosition === "right";
+  const flexClass = isVertical ? "flex-col" : "flex-row";
+  const dividerClass = isVertical
+    ? "h-px w-8 bg-white/20 my-1"
+    : "w-px h-8 bg-white/20 mx-1";
+
+  // Determine tooltip side
+  const getTooltipSide = () => {
+    switch (dockPosition) {
+      case "left":
+        return "right";
+      case "right":
+        return "left";
+      case "bottom":
+      default:
+        return "top";
+    }
+  };
+
+  // Determine origin class based on position
+  const originClass = () => {
+    switch (dockPosition) {
+      case "left":
+        return "origin-left";
+      case "right":
+        return "origin-right";
+      case "bottom":
+      default:
+        return "origin-bottom";
+    }
+  };
+
+  // Determine hover transform class based on position
+  const getHoverTransformClass = () => {
+    switch (dockPosition) {
+      case "left":
+        return "hover:translate-x-1";
+      case "right":
+        return "hover:-translate-x-1";
+      case "bottom":
+      default:
+        return "hover:-translate-y-1";
+    }
+  };
+
   return (
     <>
-      {/* macOS-style dock at bottom */}
-      <div className="fixed bottom-2 left-1/2 -translate-x-1/2 z-50">
+      <div className={getContainerClasses()}>
         <ContextMenu>
           <ContextMenuTrigger disabled={!canAddSite} asChild>
             <div
-              className="flex items-center gap-3 px-3 py-2 rounded-2xl bg-white/10 backdrop-blur-2xl shadow-2xl gradient-border origin-bottom transition-transform duration-100 ease-out"
+              className={cn(
+                "flex items-center gap-3 px-3 py-2 rounded-2xl bg-white/10 backdrop-blur-2xl shadow-2xl gradient-border transition-all duration-300 ease-out",
+                flexClass,
+                originClass(),
+              )}
               onContextMenu={() => {
                 // Close other context menus when this one opens
                 window.dispatchEvent(
@@ -155,15 +249,20 @@ export function PinnedSitesBar() {
               >
                 <SortableContext
                   items={sites.map((s) => s.id)}
-                  strategy={horizontalListSortingStrategy}
+                  strategy={isVertical
+                    ? verticalListSortingStrategy
+                    : horizontalListSortingStrategy}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className={cn("flex items-center gap-3", flexClass)}>
                     {sites.map((site) => (
                       <SortableSite key={site.id} id={site.id}>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <button
-                              className="size-10 rounded-xl hover:brightness-110 flex items-center justify-center overflow-hidden transition-all duration-200 cursor-pointer active:cursor-grabbing shadow-sm hover:scale-110 hover:-translate-y-1 relative"
+                              className={cn(
+                                "size-10 rounded-xl hover:brightness-110 flex items-center justify-center overflow-hidden transition-all duration-200 cursor-pointer active:cursor-grabbing shadow-sm hover:scale-110 relative",
+                                getHoverTransformClass(),
+                              )}
                               style={{
                                 backgroundColor: site.backgroundColor ||
                                   "rgba(255,255,255,1)",
@@ -211,7 +310,10 @@ export function PinnedSitesBar() {
                               />
                             </button>
                           </TooltipTrigger>
-                          <TooltipContent side="top" sideOffset={8}>
+                          <TooltipContent
+                            side={getTooltipSide()}
+                            sideOffset={8}
+                          >
                             {site.title}
                           </TooltipContent>
                         </Tooltip>
@@ -222,13 +324,16 @@ export function PinnedSitesBar() {
               </DndContext>
 
               {/* Divider before action buttons */}
-              <div className="w-px h-8 bg-white/20 mx-1" />
+              <div className={dividerClass} />
 
               {/* Customize button - opens widget picker */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
-                    className="size-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all duration-200 cursor-pointer hover:scale-110 hover:-translate-y-1"
+                    className={cn(
+                      "size-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all duration-200 cursor-pointer hover:scale-110",
+                      getHoverTransformClass(),
+                    )}
                     onClick={() => window.dispatchEvent(
                       new Event("kiwi-open-widget-picker"),
                     )}
@@ -236,7 +341,7 @@ export function PinnedSitesBar() {
                     <LayoutGrid className="size-5 text-foreground/70" />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent side="top" sideOffset={8}>
+                <TooltipContent side={getTooltipSide()} sideOffset={8}>
                   Widgets
                 </TooltipContent>
               </Tooltip>
@@ -245,14 +350,17 @@ export function PinnedSitesBar() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
-                    className="size-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all duration-200 cursor-pointer hover:scale-110 hover:-translate-y-1"
+                    className={cn(
+                      "size-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all duration-200 cursor-pointer hover:scale-110",
+                      getHoverTransformClass(),
+                    )}
                     onClick={() =>
                       window.dispatchEvent(new Event("kiwi-open-settings"))}
                   >
                     <Settings className="size-5 text-foreground/70" />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent side="top" sideOffset={8}>
+                <TooltipContent side={getTooltipSide()} sideOffset={8}>
                   Settings
                 </TooltipContent>
               </Tooltip>

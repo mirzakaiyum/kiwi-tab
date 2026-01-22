@@ -1,18 +1,14 @@
 import * as React from "react";
 import {
     ArrowRight,
-    Calendar,
     ChevronDown,
     Code,
-    DollarSign,
     GraduationCap,
     Heart,
-    Languages,
     type LucideIcon,
     Palette,
     Plus,
     Sparkles,
-    Tv,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,8 +21,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { SuggestDropdown } from "@/components/chatbox/suggest-dropdown";
+import { QuickSuggestions } from "@/components/chatbox/quick-suggestions";
 import CreateExpertDialog from "@/components/dialogs/create-expert-dialog";
-import { DEFAULT_EXPERTS, type Expert } from "@/components/default-values";
+import { DEFAULT_EXPERTS, type Expert } from "@/defaults/default-prompts";
+import { MODELS, SEARCH_ENGINES } from "@/defaults/default-search-models";
 
 // Icon mapping for experts
 const EXPERT_ICONS: Record<string, LucideIcon> = {
@@ -37,67 +35,8 @@ const EXPERT_ICONS: Record<string, LucideIcon> = {
     Sparkles, // Default fallback
 };
 
-// AI model configurations
-const MODELS = [
-    {
-        id: "chatgpt",
-        name: "ChatGPT",
-        icon: "https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/chatgpt-icon.png",
-        url: (q: string) => `https://chatgpt.com/?q=${encodeURIComponent(q)}`,
-    },
-    {
-        id: "perplexity",
-        name: "Perplexity",
-        icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Perplexity_AI_Turquoise_on_White.png/960px-Perplexity_AI_Turquoise_on_White.png?20250123162739",
-        url: (q: string) =>
-            `https://www.perplexity.ai/search?q=${encodeURIComponent(q)}`,
-    },
-    {
-        id: "google-ai",
-        name: "Google AI Mode",
-        icon: "https://upload.wikimedia.org/wikipedia/commons/2/2d/Google-favicon-2015.png?20150901215638",
-        url: (q: string) =>
-            `https://www.google.com/search?sourceid=chrome&udm=50&q=${encodeURIComponent(
-                q,
-            )}`,
-    },
-] as const;
-
-// Search engine configurations
-const SEARCH_ENGINES = [
-    {
-        id: "google",
-        name: "Google",
-        icon: "https://www.google.com/favicon.ico",
-        url: (q: string) =>
-            `https://www.google.com/search?q=${encodeURIComponent(q)}`,
-    },
-    {
-        id: "bing",
-        name: "Bing",
-        icon: "https://www.bing.com/favicon.ico",
-        url: (q: string) =>
-            `https://www.bing.com/search?q=${encodeURIComponent(q)}`,
-    },
-    {
-        id: "duckduckgo",
-        name: "DuckDuckGo",
-        icon: "https://duckduckgo.com/favicon.ico",
-        url: (q: string) =>
-            `https://duckduckgo.com/?q=${encodeURIComponent(q)}`,
-    },
-] as const;
-
 // Combined options type
 type SearchOption = (typeof MODELS)[number] | (typeof SEARCH_ENGINES)[number];
-
-// Quick suggestion chips
-const QUICK_SUGGESTIONS = [
-    { label: "Translate", icon: Languages },
-    { label: "Net Worth", icon: DollarSign },
-    { label: "What to watch", icon: Tv },
-    { label: "Upcoming Events", icon: Calendar },
-];
 
 // Storage keys
 const MODEL_STORAGE_KEY = "kiwi-selected-model";
@@ -130,8 +69,7 @@ function getExperts(): Expert[] {
             // Ensure all experts have an icon (for backwards compatibility)
             return parsed.map((e: Expert) => ({
                 ...e,
-                icon:
-                    e.icon ||
+                icon: e.icon ||
                     DEFAULT_EXPERTS.find((d) => d.id === e.id)?.icon ||
                     "Sparkles",
             }));
@@ -143,11 +81,13 @@ function getExperts(): Expert[] {
 export interface ChatboxProps {}
 
 export function Chatbox() {
-    const [searchAIEnabled, setSearchAIEnabled] =
-        React.useState(isSearchAIEnabled);
+    const [searchAIEnabled, setSearchAIEnabled] = React.useState(
+        isSearchAIEnabled,
+    );
     const [query, setQuery] = React.useState("");
-    const [selectedModel, setSelectedModel] =
-        React.useState<SearchOption>(getSavedModel);
+    const [selectedModel, setSelectedModel] = React.useState<SearchOption>(
+        getSavedModel,
+    );
     const [experts, setExperts] = React.useState<Expert[]>(getExperts);
     const [selectedExpert, setSelectedExpert] = React.useState<Expert | null>(
         null,
@@ -208,8 +148,9 @@ export function Chatbox() {
                 target.closest(
                     '[data-slot="dialog-content"], [data-slot="dialog-overlay"], [data-slot="dropdown-menu-content"], [data-slot="dropdown-menu-item"]',
                 )
-            )
+            ) {
                 return;
+            }
             setShowSuggestions(false);
         };
 
@@ -300,11 +241,9 @@ export function Chatbox() {
             >
                 <Textarea
                     ref={textareaRef}
-                    placeholder={
-                        isSearchEngine
-                            ? `Search anything on ${selectedModel.name}`
-                            : "Ask anything. Type @ for Experts and / for shortcuts."
-                    }
+                    placeholder={isSearchEngine
+                        ? `Search anything on ${selectedModel.name}`
+                        : "Ask anything. Type @ for Experts and / for shortcuts."}
                     value={query}
                     onFocus={() => setShowSuggestions(true)}
                     onChange={(e) => {
@@ -313,10 +252,10 @@ export function Chatbox() {
                         setSelectedShortcutIndex(0); // Reset selection when typing
                     }}
                     onKeyDown={(e) => {
-                        const isShortcutMode =
-                            query.startsWith("/") && showSuggestions;
-                        const isExpertMode =
-                            query.startsWith("@") && showSuggestions;
+                        const isShortcutMode = query.startsWith("/") &&
+                            showSuggestions;
+                        const isExpertMode = query.startsWith("@") &&
+                            showSuggestions;
 
                         if (isShortcutMode || isExpertMode) {
                             if (e.key === "ArrowDown") {
@@ -325,12 +264,12 @@ export function Chatbox() {
                                     Math.min(
                                         prev + 1,
                                         shortcutCountRef.current - 1,
-                                    ),
+                                    )
                                 );
                             } else if (e.key === "ArrowUp") {
                                 e.preventDefault();
                                 setSelectedShortcutIndex((prev) =>
-                                    Math.max(prev - 1, 0),
+                                    Math.max(prev - 1, 0)
                                 );
                             } else if (e.key === "Enter" && !e.shiftKey) {
                                 e.preventDefault();
@@ -347,8 +286,7 @@ export function Chatbox() {
                                 ) {
                                     // Find and select the expert by id
                                     const expert = experts.find(
-                                        (ex) =>
-                                            ex.id ===
+                                        (ex) => ex.id ===
                                             selectedShortcutRef.current,
                                     );
                                     if (expert) {
@@ -449,19 +387,18 @@ export function Chatbox() {
                                                 "text-foreground/50 hover:border-border bg-transparent hover:bg-transparent! hover:text-foreground border-transparent",
                                         )}
                                     >
-                                        {selectedExpert ? (
-                                            (() => {
-                                                const Icon =
-                                                    EXPERT_ICONS[
+                                        {selectedExpert
+                                            ? (
+                                                (() => {
+                                                    const Icon = EXPERT_ICONS[
                                                         selectedExpert.icon
                                                     ] || Sparkles;
-                                                return (
-                                                    <Icon className="size-3" />
-                                                );
-                                            })()
-                                        ) : (
-                                            <Sparkles className="size-3" />
-                                        )}
+                                                    return (
+                                                        <Icon className="size-3" />
+                                                    );
+                                                })()
+                                            )
+                                            : <Sparkles className="size-3" />}
                                         <span className="text-xs font-medium">
                                             {selectedExpert?.name || "Expert"}
                                         </span>
@@ -499,15 +436,14 @@ export function Chatbox() {
                                                 onClick={() =>
                                                     setSelectedExpert(
                                                         selectedExpert?.id ===
-                                                            expert.id
+                                                                expert.id
                                                             ? null
                                                             : expert,
-                                                    )
-                                                }
+                                                    )}
                                                 className={cn(
                                                     "gap-2",
                                                     selectedExpert?.id ===
-                                                        expert.id &&
+                                                            expert.id &&
                                                         "bg-primary/10 text-primary",
                                                 )}
                                             >
@@ -515,7 +451,7 @@ export function Chatbox() {
                                                     className={cn(
                                                         "size-3",
                                                         selectedExpert?.id ===
-                                                            expert.id &&
+                                                                expert.id &&
                                                             "text-primary",
                                                     )}
                                                 />
@@ -526,8 +462,7 @@ export function Chatbox() {
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem
                                         onClick={() =>
-                                            setCreateExpertOpen(true)
-                                        }
+                                            setCreateExpertOpen(true)}
                                         className="gap-2"
                                     >
                                         <Plus className="size-4 text-muted-foreground/60" />
@@ -545,7 +480,7 @@ export function Chatbox() {
                         className={cn(
                             "transition-all gap-1.5 h-8",
                             query.trim()
-                                ? "bg-primary/80 text-primary-foreground hover:bg-primary"
+                                ? "bg-primary/80 text-foreground hover:bg-primary"
                                 : "bg-muted-foreground/10 text-muted-foreground",
                         )}
                     >
@@ -576,22 +511,7 @@ export function Chatbox() {
                 />
             </div>
 
-            <div className="flex flex-wrap justify-center gap-2 px-1 pt-4">
-                {QUICK_SUGGESTIONS.map((s) => {
-                    const Icon = s.icon;
-                    return (
-                        <Button
-                            key={s.label}
-                            variant="ghost"
-                            onClick={() => handleSelectSuggestion(s.label)}
-                            className="cursor-pointer border border-border text-muted-foreground bg-transparent! hover:bg-foreground/5! rounded-full px-3 py-1 text-sm gap-1.5"
-                        >
-                            <Icon className="size-3.5" />
-                            {s.label}
-                        </Button>
-                    );
-                })}
-            </div>
+            <QuickSuggestions onSelect={handleSelectSuggestion} />
 
             <CreateExpertDialog
                 open={createExpertOpen}
@@ -607,9 +527,11 @@ async function fetchSuggestions(q: string): Promise<string[]> {
     // Try Google Suggest
     try {
         const res = await fetch(
-            `https://suggestqueries.google.com/complete/search?client=chrome&q=${encodeURIComponent(
-                q,
-            )}`,
+            `https://suggestqueries.google.com/complete/search?client=chrome&q=${
+                encodeURIComponent(
+                    q,
+                )
+            }`,
         );
         const data = await res.json();
         if (Array.isArray(data?.[1]) && data[1].length > 0) {
@@ -620,9 +542,11 @@ async function fetchSuggestions(q: string): Promise<string[]> {
     // Fallback: Wikipedia
     try {
         const res = await fetch(
-            `https://en.wikipedia.org/w/api.php?action=opensearch&origin=*&search=${encodeURIComponent(
-                q,
-            )}&limit=3&namespace=0&format=json`,
+            `https://en.wikipedia.org/w/api.php?action=opensearch&origin=*&search=${
+                encodeURIComponent(
+                    q,
+                )
+            }&limit=3&namespace=0&format=json`,
         );
         const data = await res.json();
         if (data?.[1]?.length > 0) {
