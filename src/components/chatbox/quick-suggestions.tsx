@@ -45,7 +45,7 @@ export function QuickSuggestions({ onSelect }: QuickSuggestionsProps) {
             key={s.label}
             variant="ghost"
             onClick={() => onSelect(s.label)}
-            className="cursor-pointer border border-border text-muted-foreground bg-transparent! hover:bg-foreground/5! rounded-full px-3 py-1 text-sm gap-1.5"
+            className="cursor-pointer border border-border text-muted-foreground dark:bg-foreground/10 dark:hover:bg-foreground/20 rounded-full px-3 py-1 text-sm gap-1.5"
           >
             <Icon className="size-3.5" />
             {s.label}

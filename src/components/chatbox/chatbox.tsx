@@ -20,7 +20,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { SuggestDropdown } from "@/components/chatbox/suggest-dropdown";
+import { SuggestDropdown } from "@/components/chatbox/chatbox-dropdown";
 import { QuickSuggestions } from "@/components/chatbox/quick-suggestions";
 import CreateExpertDialog from "@/components/dialogs/create-expert-dialog";
 import { DEFAULT_EXPERTS, type Expert } from "@/defaults/default-prompts";
@@ -69,7 +69,8 @@ function getExperts(): Expert[] {
             // Ensure all experts have an icon (for backwards compatibility)
             return parsed.map((e: Expert) => ({
                 ...e,
-                icon: e.icon ||
+                icon:
+                    e.icon ||
                     DEFAULT_EXPERTS.find((d) => d.id === e.id)?.icon ||
                     "Sparkles",
             }));
@@ -81,13 +82,11 @@ function getExperts(): Expert[] {
 export interface ChatboxProps {}
 
 export function Chatbox() {
-    const [searchAIEnabled, setSearchAIEnabled] = React.useState(
-        isSearchAIEnabled,
-    );
+    const [searchAIEnabled, setSearchAIEnabled] =
+        React.useState(isSearchAIEnabled);
     const [query, setQuery] = React.useState("");
-    const [selectedModel, setSelectedModel] = React.useState<SearchOption>(
-        getSavedModel,
-    );
+    const [selectedModel, setSelectedModel] =
+        React.useState<SearchOption>(getSavedModel);
     const [experts, setExperts] = React.useState<Expert[]>(getExperts);
     const [selectedExpert, setSelectedExpert] = React.useState<Expert | null>(
         null,
@@ -101,6 +100,7 @@ export function Chatbox() {
     const [selectedShortcutIndex, setSelectedShortcutIndex] = React.useState(0);
     const selectedShortcutRef = React.useRef<string | null>(null);
     const shortcutCountRef = React.useRef(0);
+    const [isFocused, setIsFocused] = React.useState(false);
 
     const textareaRef = React.useRef<HTMLTextAreaElement>(null);
     const containerRef = React.useRef<HTMLDivElement>(null);
@@ -136,6 +136,37 @@ export function Chatbox() {
     React.useEffect(() => {
         localStorage.setItem(EXPERTS_LIST_KEY, JSON.stringify(experts));
     }, [experts]);
+
+    // Manage focus state for chatbox
+    React.useEffect(() => {
+        const handleClickInside = (e: MouseEvent) => {
+            const target = e.target as HTMLElement;
+            if (containerRef.current?.contains(target)) {
+                setIsFocused(true);
+            }
+        };
+
+        const handleClickOutside = (e: MouseEvent) => {
+            const target = e.target as HTMLElement;
+            if (!containerRef.current?.contains(target)) {
+                // Check if clicking on dialog or dropdown elements
+                if (
+                    !target.closest(
+                        '[data-slot="dialog-content"], [data-slot="dialog-overlay"], [data-slot="dropdown-menu-content"], [data-slot="dropdown-menu-item"]',
+                    )
+                ) {
+                    setIsFocused(false);
+                }
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickInside);
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickInside);
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     // Close suggestions on outside click or Escape
     React.useEffect(() => {
@@ -210,18 +241,37 @@ export function Chatbox() {
         textareaRef.current?.focus();
     };
 
-    const handleSaveExpert = (expert: Expert) => {
-        const exists = experts.findIndex((e) => e.id === expert.id);
-        let next: Expert[];
-        if (exists >= 0) {
-            const copy = experts.slice();
-            copy.splice(exists, 1);
-            next = [expert, ...copy].slice(0, 10);
+    const handleSaveExpert = (expert: Expert, isEdit: boolean) => {
+        if (isEdit) {
+            // Update existing expert
+            const updatedExperts = experts.map((e) =>
+                e.id === expert.id ? expert : e,
+            );
+            setExperts(updatedExperts);
+            setSelectedExpert(expert);
         } else {
-            next = [expert, ...experts].slice(0, 10);
+            // Add new expert
+            const exists = experts.findIndex((e) => e.id === expert.id);
+            let next: Expert[];
+            if (exists >= 0) {
+                const copy = experts.slice();
+                copy.splice(exists, 1);
+                next = [expert, ...copy].slice(0, 10);
+            } else {
+                next = [expert, ...experts].slice(0, 10);
+            }
+            setExperts(next);
+            setSelectedExpert(expert);
         }
-        setExperts(next);
-        setSelectedExpert(expert);
+    };
+
+    const handleDeleteExpert = (id: string) => {
+        const filtered = experts.filter((e) => e.id !== id);
+        setExperts(filtered);
+        // Clear selected expert if it was the deleted one
+        if (selectedExpert?.id === id) {
+            setSelectedExpert(null);
+        }
     };
 
     if (!searchAIEnabled) return null;
@@ -230,8 +280,8 @@ export function Chatbox() {
         <div ref={containerRef} className="relative w-full">
             <div
                 className={cn(
-                    "focus-within:bg-input border-border/80 focus-within:border-border focus-within:ring-ring/20 relative z-20 flex w-full flex-col gap-2 border p-2 transition-all",
-                    query.length > 0
+                    "border-border/80 relative z-20 flex w-full flex-col gap-2 border p-2 transition-all",
+                    isFocused || query.length > 0
                         ? "bg-input"
                         : "bg-input/30 backdrop-blur-2xl",
                     showSuggestions
@@ -241,21 +291,26 @@ export function Chatbox() {
             >
                 <Textarea
                     ref={textareaRef}
-                    placeholder={isSearchEngine
-                        ? `Search anything on ${selectedModel.name}`
-                        : "Ask anything. Type @ for Experts and / for shortcuts."}
+                    placeholder={
+                        isSearchEngine
+                            ? `Search anything on ${selectedModel.name}`
+                            : "Ask anything. Type @ for Experts and / for shortcuts."
+                    }
                     value={query}
-                    onFocus={() => setShowSuggestions(true)}
+                    onFocus={() => {
+                        setShowSuggestions(true);
+                        setIsFocused(true);
+                    }}
                     onChange={(e) => {
                         setQuery(e.target.value);
                         setShowSuggestions(true);
                         setSelectedShortcutIndex(0); // Reset selection when typing
                     }}
                     onKeyDown={(e) => {
-                        const isShortcutMode = query.startsWith("/") &&
-                            showSuggestions;
-                        const isExpertMode = query.startsWith("@") &&
-                            showSuggestions;
+                        const isShortcutMode =
+                            query.startsWith("/") && showSuggestions;
+                        const isExpertMode =
+                            query.startsWith("@") && showSuggestions;
 
                         if (isShortcutMode || isExpertMode) {
                             if (e.key === "ArrowDown") {
@@ -264,12 +319,12 @@ export function Chatbox() {
                                     Math.min(
                                         prev + 1,
                                         shortcutCountRef.current - 1,
-                                    )
+                                    ),
                                 );
                             } else if (e.key === "ArrowUp") {
                                 e.preventDefault();
                                 setSelectedShortcutIndex((prev) =>
-                                    Math.max(prev - 1, 0)
+                                    Math.max(prev - 1, 0),
                                 );
                             } else if (e.key === "Enter" && !e.shiftKey) {
                                 e.preventDefault();
@@ -286,7 +341,8 @@ export function Chatbox() {
                                 ) {
                                     // Find and select the expert by id
                                     const expert = experts.find(
-                                        (ex) => ex.id ===
+                                        (ex) =>
+                                            ex.id ===
                                             selectedShortcutRef.current,
                                     );
                                     if (expert) {
@@ -387,18 +443,19 @@ export function Chatbox() {
                                                 "text-foreground/50 hover:border-border bg-transparent hover:bg-transparent! hover:text-foreground border-transparent",
                                         )}
                                     >
-                                        {selectedExpert
-                                            ? (
-                                                (() => {
-                                                    const Icon = EXPERT_ICONS[
+                                        {selectedExpert ? (
+                                            (() => {
+                                                const Icon =
+                                                    EXPERT_ICONS[
                                                         selectedExpert.icon
                                                     ] || Sparkles;
-                                                    return (
-                                                        <Icon className="size-3" />
-                                                    );
-                                                })()
-                                            )
-                                            : <Sparkles className="size-3" />}
+                                                return (
+                                                    <Icon className="size-3" />
+                                                );
+                                            })()
+                                        ) : (
+                                            <Sparkles className="size-3" />
+                                        )}
                                         <span className="text-xs font-medium">
                                             {selectedExpert?.name || "Expert"}
                                         </span>
@@ -436,14 +493,15 @@ export function Chatbox() {
                                                 onClick={() =>
                                                     setSelectedExpert(
                                                         selectedExpert?.id ===
-                                                                expert.id
+                                                            expert.id
                                                             ? null
                                                             : expert,
-                                                    )}
+                                                    )
+                                                }
                                                 className={cn(
                                                     "gap-2",
                                                     selectedExpert?.id ===
-                                                            expert.id &&
+                                                        expert.id &&
                                                         "bg-primary/10 text-primary",
                                                 )}
                                             >
@@ -451,7 +509,7 @@ export function Chatbox() {
                                                     className={cn(
                                                         "size-3",
                                                         selectedExpert?.id ===
-                                                                expert.id &&
+                                                            expert.id &&
                                                             "text-primary",
                                                     )}
                                                 />
@@ -462,7 +520,8 @@ export function Chatbox() {
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem
                                         onClick={() =>
-                                            setCreateExpertOpen(true)}
+                                            setCreateExpertOpen(true)
+                                        }
                                         className="gap-2"
                                     >
                                         <Plus className="size-4 text-muted-foreground/60" />
@@ -517,6 +576,8 @@ export function Chatbox() {
                 open={createExpertOpen}
                 onOpenChange={setCreateExpertOpen}
                 onSave={handleSaveExpert}
+                onDelete={handleDeleteExpert}
+                experts={experts}
                 maxReached={experts.length >= 10}
             />
         </div>
@@ -527,11 +588,9 @@ async function fetchSuggestions(q: string): Promise<string[]> {
     // Try Google Suggest
     try {
         const res = await fetch(
-            `https://suggestqueries.google.com/complete/search?client=chrome&q=${
-                encodeURIComponent(
-                    q,
-                )
-            }`,
+            `https://suggestqueries.google.com/complete/search?client=chrome&q=${encodeURIComponent(
+                q,
+            )}`,
         );
         const data = await res.json();
         if (Array.isArray(data?.[1]) && data[1].length > 0) {
@@ -542,11 +601,9 @@ async function fetchSuggestions(q: string): Promise<string[]> {
     // Fallback: Wikipedia
     try {
         const res = await fetch(
-            `https://en.wikipedia.org/w/api.php?action=opensearch&origin=*&search=${
-                encodeURIComponent(
-                    q,
-                )
-            }&limit=3&namespace=0&format=json`,
+            `https://en.wikipedia.org/w/api.php?action=opensearch&origin=*&search=${encodeURIComponent(
+                q,
+            )}&limit=3&namespace=0&format=json`,
         );
         const data = await res.json();
         if (data?.[1]?.length > 0) {

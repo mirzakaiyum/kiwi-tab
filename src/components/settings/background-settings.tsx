@@ -331,8 +331,8 @@ export function BackgroundSettings() {
                     <Slider
                         value={[brightness]}
                         onValueChange={(value) => setBrightness(value[0])}
-                        min={0}
-                        max={50}
+                        min={30}
+                        max={60}
                         step={5}
                         className="w-full"
                     />

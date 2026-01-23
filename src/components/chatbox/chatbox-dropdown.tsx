@@ -34,7 +34,7 @@ const EXPERT_ICONS: Record<string, LucideIcon> = {
     Sparkles, // Default fallback
 };
 
-const STORAGE_KEY = "prompt_shortcuts";
+const STORAGE_KEY = "kiwi-user-shortcuts";
 
 interface SuggestDropdownProps {
     visible: boolean;
@@ -96,26 +96,41 @@ export function SuggestDropdown({
         }
     };
 
-    const handleCreateSave = (s: UserShortcut) => {
-        const existingIndex = userShortcuts.findIndex((u) => u.id === s.id);
-        let next: UserShortcut[];
-        if (existingIndex >= 0) {
-            const copy = userShortcuts.slice();
-            copy.splice(existingIndex, 1);
-            next = [s, ...copy].slice(0, 6);
+    const handleCreateSave = (s: UserShortcut, isEdit: boolean) => {
+        if (isEdit) {
+            // Update existing shortcut
+            const updatedShortcuts = userShortcuts.map((u) =>
+                u.id === s.id ? s : u,
+            );
+            persist(updatedShortcuts);
         } else {
-            next = [s, ...userShortcuts].slice(0, 6);
+            // Add new shortcut
+            const existingIndex = userShortcuts.findIndex((u) => u.id === s.id);
+            let next: UserShortcut[];
+            if (existingIndex >= 0) {
+                const copy = userShortcuts.slice();
+                copy.splice(existingIndex, 1);
+                next = [s, ...copy].slice(0, 6);
+            } else {
+                next = [s, ...userShortcuts].slice(0, 6);
+            }
+            persist(next);
         }
-        persist(next);
+    };
+
+    const handleDeleteShortcut = (id: string) => {
+        const filtered = userShortcuts.filter((s) => s.id !== id);
+        persist(filtered);
     };
 
     // Filter shortcuts when query starts with /
     const filteredShortcuts = React.useMemo(() => {
         if (!query.startsWith("/")) return userShortcuts;
         const searchTerm = query.toLowerCase();
-        return userShortcuts.filter((s) =>
-            s.name.toLowerCase().includes(searchTerm) ||
-            s.id.toLowerCase().includes(searchTerm.slice(1))
+        return userShortcuts.filter(
+            (s) =>
+                s.name.toLowerCase().includes(searchTerm) ||
+                s.id.toLowerCase().includes(searchTerm.slice(1)),
         );
     }, [query, userShortcuts]);
 
@@ -123,9 +138,10 @@ export function SuggestDropdown({
     const filteredExperts = React.useMemo(() => {
         if (!query.startsWith("@")) return experts;
         const searchTerm = query.slice(1).toLowerCase();
-        return experts.filter((e) =>
-            e.name.toLowerCase().includes(searchTerm) ||
-            e.id.toLowerCase().includes(searchTerm)
+        return experts.filter(
+            (e) =>
+                e.name.toLowerCase().includes(searchTerm) ||
+                e.id.toLowerCase().includes(searchTerm),
         );
     }, [query, experts]);
 
@@ -135,13 +151,14 @@ export function SuggestDropdown({
     const activeList = isShortcutMode
         ? filteredShortcuts
         : isExpertMode
-        ? filteredExperts
-        : [];
+          ? filteredExperts
+          : [];
 
     // Calculate safe index that stays within bounds
-    const safeIndex = activeList.length > 0
-        ? Math.min(selectedIndex, activeList.length - 1)
-        : 0;
+    const safeIndex =
+        activeList.length > 0
+            ? Math.min(selectedIndex, activeList.length - 1)
+            : 0;
 
     // Notify parent of selected item for Enter key selection
     React.useEffect(() => {
@@ -169,57 +186,63 @@ export function SuggestDropdown({
 
     if (!visible) return null;
 
-    const showShortcuts = !searchLoading && searchSuggestions.length === 0 &&
-        !isExpertMode;
+    const showShortcuts =
+        !searchLoading && searchSuggestions.length === 0 && !isExpertMode;
 
     return (
         <div className="bg-input border-border animate-in fade-in slide-in-from-top-1 absolute top-full -left-px -right-px z-30 rounded-b-xl border overflow-hidden shadow-md p-1">
             <Command className="bg-transparent">
                 <CommandList className="max-h-none">
                     {/* Loading state */}
-                    {searchLoading && searchSuggestions.length === 0 &&
-                        !isExpertMode && !isShortcutMode && (
-                        <CommandGroup heading="Suggestions">
-                            <CommandItem className="gap-3 text-muted-foreground/60">
-                                Loading...
-                            </CommandItem>
-                        </CommandGroup>
-                    )}
+                    {searchLoading &&
+                        searchSuggestions.length === 0 &&
+                        !isExpertMode &&
+                        !isShortcutMode && (
+                            <CommandGroup heading="Suggestions">
+                                <CommandItem className="gap-3 text-muted-foreground/60">
+                                    Loading...
+                                </CommandItem>
+                            </CommandGroup>
+                        )}
 
                     {/* Search suggestions */}
-                    {!searchLoading && searchSuggestions.length > 0 &&
-                        !isExpertMode && !isShortcutMode && (
-                        <CommandGroup heading="Suggestions">
-                            {searchSuggestions.slice(0, 3).map((s) => (
-                                <CommandItem
-                                    key={s}
-                                    onSelect={() => onSelectSuggestion?.(s)}
-                                    className="gap-3 w-full justify-between group/item"
-                                >
-                                    <div className="flex gap-1 items-center opacity-40">
-                                        <Search className="size-3" />
-                                        {s}
-                                    </div>
-                                    <CornerDownLeft className="size-3 text-muted-foreground/40 opacity-0 group-hover/item:opacity-100 transition-opacity" />
-                                </CommandItem>
-                            ))}
-                        </CommandGroup>
-                    )}
+                    {!searchLoading &&
+                        searchSuggestions.length > 0 &&
+                        !isExpertMode &&
+                        !isShortcutMode && (
+                            <CommandGroup heading="Suggestions">
+                                {searchSuggestions.slice(0, 3).map((s) => (
+                                    <CommandItem
+                                        key={s}
+                                        onSelect={() => onSelectSuggestion?.(s)}
+                                        className="gap-3 w-full justify-between group/item"
+                                    >
+                                        <div className="flex gap-1 items-center opacity-40">
+                                            <Search className="size-3" />
+                                            {s}
+                                        </div>
+                                        <CornerDownLeft className="size-3 text-muted-foreground/40 opacity-0 group-hover/item:opacity-100 transition-opacity" />
+                                    </CommandItem>
+                                ))}
+                            </CommandGroup>
+                        )}
 
                     {/* Shortcuts list */}
                     {showShortcuts && (
                         <CommandGroup heading="Shortcuts">
                             {filteredShortcuts.map((u, index) => {
-                                const isSelected = isShortcutMode &&
-                                    index === safeIndex;
+                                const isSelected =
+                                    isShortcutMode && index === safeIndex;
                                 return (
                                     <CommandItem
                                         key={u.id}
                                         onSelect={() =>
-                                            onSelectSuggestion?.(u.prompt)}
+                                            onSelectSuggestion?.(u.prompt)
+                                        }
                                         onMouseEnter={() =>
                                             isShortcutMode &&
-                                            onHoverIndex?.(index)}
+                                            onHoverIndex?.(index)
+                                        }
                                         className={cn(
                                             "gap-3 justify-between",
                                             // Override cmdk's data-selected when in filter mode
@@ -250,14 +273,15 @@ export function SuggestDropdown({
                         <CommandGroup heading="Experts">
                             {filteredExperts.map((e, index) => {
                                 const isSelected = index === safeIndex;
-                                const IconComponent = EXPERT_ICONS[e.icon] ||
-                                    Sparkles;
+                                const IconComponent =
+                                    EXPERT_ICONS[e.icon] || Sparkles;
                                 return (
                                     <CommandItem
                                         key={e.id}
                                         onSelect={() => onSelectExpert?.(e)}
                                         onMouseEnter={() =>
-                                            onHoverIndex?.(index)}
+                                            onHoverIndex?.(index)
+                                        }
                                         className={cn(
                                             "gap-3 justify-between",
                                             // Override cmdk's data-selected when in expert mode
@@ -306,6 +330,8 @@ export function SuggestDropdown({
                 open={createOpen}
                 onOpenChange={setCreateOpen}
                 onSave={handleCreateSave}
+                onDelete={handleDeleteShortcut}
+                shortcuts={userShortcuts}
                 maxReached={userShortcuts.length >= 6}
             />
         </div>
