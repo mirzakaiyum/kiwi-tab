@@ -35,7 +35,7 @@ function StepOne({ onNext }: { onNext: () => void }) {
             <div className="flex-1 text-left space-y-4">
                 <h2 className="text-4xl font-bold">Keep Your New Tab</h2>
                 <p className="text-foreground/70 text-lg leading-relaxed">
-                    When Chrome asks if you want to keep the changes, click{" "}
+                    When it asks if you want to keep the changes, click{" "}
                     <span className="font-semibold text-foreground">
                         "Keep Changes"
                     </span>{" "}
@@ -65,12 +65,12 @@ function StepTwo({ onNext }: { onNext: () => void }) {
             <div className="flex-1 text-left space-y-4">
                 <h2 className="text-4xl font-semibold">Customize Your Space</h2>
                 <p className="text-foreground/70 text-lg leading-relaxed">
-                    Right-click on any empty space to access the context menu.
+                    Right-click on empty space at the bottom to access the context menu.
                     You can use it to{" "}
                     <span className="font-semibold text-foreground">
                         hide the footer
                     </span>{" "}
-                    or customize other elements.
+                    .
                 </p>
                 <Button onClick={onNext} size="lg" className="gap-2 mt-6 rounded-full font-semibold">
                     Next <ChevronRight className="h-4 w-4" />
@@ -104,8 +104,7 @@ function StepThree({ onComplete }: { onComplete: (name: string) => void }) {
                 What should we call you?
             </h2>
             <p className="text-foreground/70 text-lg mb-8 max-w-md">
-                Enter your name for a personalized greeting every time you open
-                a new tab.
+                Enter your name you prefer to be called.
             </p>
             <form onSubmit={handleSubmit} className="w-full max-w-xs space-y-4">
                 <Input
