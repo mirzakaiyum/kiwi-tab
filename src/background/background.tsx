@@ -45,7 +45,7 @@ function getBackgroundIndex(): number {
         (localStorage.getItem(BACKGROUND_TYPE_KEY) as
             | "none"
             | "images"
-            | "videos") || "videos";
+            | "videos") || "images";
     const lastShuffle = parseInt(
         localStorage.getItem(BACKGROUND_LAST_SHUFFLE_KEY) || "0",
     );
@@ -236,7 +236,7 @@ export function Background() {
                 | "none"
                 | "images"
                 | "videos"
-                | "custom") || "videos",
+                | "custom") || "images",
     );
 
     const [blur, setBlur] = useState<number>(() =>
@@ -351,7 +351,7 @@ export function Background() {
                     | "none"
                     | "images"
                     | "videos"
-                    | "custom") || "videos";
+                    | "custom") || "images";
             setBackgroundType(type);
 
             // Update custom files from IndexedDB and queue new background if needed

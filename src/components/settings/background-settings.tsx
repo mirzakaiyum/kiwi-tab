@@ -35,7 +35,7 @@ export function BackgroundSettings() {
     const [backgroundType, setBackgroundType] = useState<BackgroundType>(
         () =>
             (localStorage.getItem(BACKGROUND_TYPE_KEY) as BackgroundType) ||
-            "videos",
+            "images",
     );
     const [backgroundFrequency, setBackgroundFrequency] =
         useState<BackgroundFrequency>(

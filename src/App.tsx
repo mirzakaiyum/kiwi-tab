@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState } from "react";
 import { ThemeProvider } from "./components/theme-provider";
 import { ContextMenuProvider } from "./contexts/context-menu";
 import { Background } from "./background/background";
@@ -14,8 +14,32 @@ const Settings = lazy(() => import("./components/settings/settings-panel"));
 const Customize = lazy(
     () => import("./components/widgetWrapper/widgets-picker"),
 );
+const Onboarding = lazy(() => import("./components/onboarding/onboarding"));
+
+// Declare the global window property set by index.html
+declare global {
+    interface Window {
+        __KIWI_ONBOARDED__: boolean;
+    }
+}
 
 export function App() {
+    // Read from window flag (set by index.html before React loads)
+    const [isOnboarded, setIsOnboarded] = useState(
+        () => window.__KIWI_ONBOARDED__ ?? false,
+    );
+
+    // Show onboarding for first-time users
+    if (!isOnboarded) {
+        return (
+            <ThemeProvider>
+                <Suspense fallback={null}>
+                    <Onboarding onComplete={() => setIsOnboarded(true)} />
+                </Suspense>
+            </ThemeProvider>
+        );
+    }
+
     return (
         <ThemeProvider>
             <ContextMenuProvider>
