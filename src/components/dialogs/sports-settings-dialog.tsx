@@ -1,8 +1,6 @@
 "use client";
 
 import * as React from "react";
-import * as PopoverPrimitive from "@radix-ui/react-popover";
-import { XIcon } from "lucide-react";
 import {
     Dialog,
     DialogContent,
@@ -20,33 +18,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import {
-    Combobox,
-    ComboboxChip,
-    ComboboxChips,
-    ComboboxChipsInput,
-    ComboboxContent,
-    ComboboxEmpty,
-    ComboboxItem,
-    ComboboxList,
-} from "@/components/ui/combobox";
-import {
-    closestCenter,
-    DndContext,
-    type DragEndEvent,
-    KeyboardSensor,
-    PointerSensor,
-    useSensor,
-    useSensors,
-} from "@dnd-kit/core";
-import {
-    arrayMove,
-    horizontalListSortingStrategy,
-    SortableContext,
-    sortableKeyboardCoordinates,
-    useSortable,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { TeamMultiSelect } from "@/components/ui/multi-select";
 import type { SportsSettings } from "@/lib/widgets/types";
 import { getSports, getTeams } from "@/lib/services/sports";
 
@@ -77,43 +49,6 @@ interface SportsSettingsDialogProps {
     onSave: (settings: SportsSettings) => void;
 }
 
-function SortableTeamChip({
-    id,
-    children,
-}: {
-    id: string;
-    children: React.ReactNode;
-}) {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging,
-    } = useSortable({ id });
-
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-    };
-
-    return (
-        <ComboboxChip
-            ref={setNodeRef}
-            style={style}
-            showRemove={false}
-            className={
-                isDragging ? "opacity-50 z-50 cursor-grabbing" : "cursor-grab"
-            }
-            {...attributes}
-            {...listeners}
-        >
-            {children}
-        </ComboboxChip>
-    );
-}
-
 export function SportsSettingsDialog({
     open,
     onOpenChange,
@@ -128,34 +63,12 @@ export function SportsSettingsDialog({
     const [sport, setSport] = React.useState("");
     const [league, setLeague] = React.useState("");
     const [teamIds, setTeamIds] = React.useState<string[]>([]);
-    const [inputValue, setInputValue] = React.useState("");
-    const [comboboxOpen, setComboboxOpen] = React.useState(false);
 
     // Teams state
     const [availableTeams, setAvailableTeams] = React.useState<TeamOption[]>(
         [],
     );
     const [, setLoadingTeams] = React.useState(false);
-
-    // DnD Sensors
-    const sensors = useSensors(
-        useSensor(PointerSensor),
-        useSensor(KeyboardSensor, {
-            coordinateGetter: sortableKeyboardCoordinates,
-        }),
-    );
-
-    const handleDragEnd = (event: DragEndEvent) => {
-        const { active, over } = event;
-
-        if (over && active.id !== over.id) {
-            setTeamIds((items) => {
-                const oldIndex = items.indexOf(active.id.toString());
-                const newIndex = items.indexOf(over.id.toString());
-                return arrayMove(items, oldIndex, newIndex);
-            });
-        }
-    };
 
     // Get current sport's leagues
     const currentLeagues = React.useMemo(() => {
@@ -174,23 +87,6 @@ export function SportsSettingsDialog({
             currentLeagues.find((l) => l.league === leagueId)?.name || leagueId
         );
     };
-
-    // Get display name for team
-    const getTeamName = (teamId: string) => {
-        const t = availableTeams.find((t) => t.id === teamId);
-        return t ? t.name : teamId;
-    };
-
-    // Filter teams based on input (Combobox filtering)
-    const filteredTeams = React.useMemo(() => {
-        if (!inputValue.trim()) return availableTeams;
-        const search = inputValue.toLowerCase();
-        return availableTeams.filter(
-            (t) =>
-                t.name.toLowerCase().includes(search) ||
-                t.abbrev.toLowerCase().includes(search),
-        );
-    }, [availableTeams, inputValue]);
 
     // Load sports data from local service when dialog opens
     React.useEffect(() => {
@@ -227,7 +123,6 @@ export function SportsSettingsDialog({
         } else {
             setTeamIds([]);
         }
-        setInputValue("");
     }, [open, settings]);
 
     // Set default sport/league when sports data loads
@@ -320,7 +215,6 @@ export function SportsSettingsDialog({
                             onValueChange={(v) => {
                                 setSport(v ?? "");
                                 setTeamIds([]);
-                                setInputValue("");
                             }}
                             disabled={loadingSports}
                         >
@@ -351,7 +245,6 @@ export function SportsSettingsDialog({
                             onValueChange={(v) => {
                                 setLeague(v ?? "");
                                 setTeamIds([]);
-                                setInputValue("");
                             }}
                             disabled={
                                 loadingSports || currentLeagues.length === 0
@@ -377,149 +270,13 @@ export function SportsSettingsDialog({
                     </div>
 
                     {/* Team Select (Multi-select) */}
-                    <div className="space-y-2">
-                        <Label>Teams</Label>
-                        <DndContext
-                            sensors={sensors}
-                            collisionDetection={closestCenter}
-                            onDragEnd={handleDragEnd}
-                        >
-                            <Combobox
-                                open={comboboxOpen}
-                                onOpenChange={setComboboxOpen}
-                                value={inputValue}
-                                onValueChange={(value) => {
-                                    if (value && !teamIds.includes(value)) {
-                                        setTeamIds((prev) => [...prev, value]);
-                                    }
-                                    setInputValue("");
-                                }}
-                            >
-                                <PopoverPrimitive.Anchor asChild>
-                                    <ComboboxChips
-                                        className="bg-background border rounded-md px-2 py-1 flex-wrap gap-1 min-h-[38px] w-full cursor-text"
-                                        onClick={(e) => {
-                                            // Focus the input and open dropdown when clicking on the chips container
-                                            const input =
-                                                e.currentTarget.querySelector(
-                                                    "input",
-                                                );
-                                            if (input) {
-                                                input.focus();
-                                                setComboboxOpen(true);
-                                            }
-                                        }}
-                                    >
-                                        <SortableContext
-                                            items={teamIds}
-                                            strategy={
-                                                horizontalListSortingStrategy
-                                            }
-                                        >
-                                            {teamIds.map((id) => (
-                                                <SortableTeamChip
-                                                    key={id}
-                                                    id={id}
-                                                >
-                                                    {getTeamName(id)}
-                                                    <span
-                                                        role="button"
-                                                        className="ml-1 opacity-50 hover:opacity-100 cursor-pointer"
-                                                        onMouseDown={(e) => {
-                                                            e.preventDefault();
-                                                            e.stopPropagation();
-                                                            setTeamIds((prev) =>
-                                                                prev.filter(
-                                                                    (p) =>
-                                                                        p !==
-                                                                        id,
-                                                                ),
-                                                            );
-                                                        }}
-                                                    >
-                                                        <XIcon className="size-3" />
-                                                    </span>
-                                                </SortableTeamChip>
-                                            ))}
-                                        </SortableContext>
-                                        <ComboboxChipsInput
-                                            placeholder={
-                                                teamIds.length === 0
-                                                    ? "Select teams..."
-                                                    : ""
-                                            }
-                                            className="min-w-[100px] flex-1 bg-transparent outline-none placeholder:text-muted-foreground text-sm"
-                                            value={inputValue}
-                                            onChange={(e) =>
-                                                setInputValue(e.target.value)
-                                            }
-                                            onFocus={() =>
-                                                setComboboxOpen(true)
-                                            }
-                                        />
-                                    </ComboboxChips>
-                                </PopoverPrimitive.Anchor>
-                                <ComboboxContent className="w-(--radix-popover-trigger-width) z-[100]">
-                                    <ComboboxList className="max-h-60 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
-                                        {/* Custom Option */}
-                                        {inputValue &&
-                                            filteredTeams.length === 0 && (
-                                                <ComboboxItem
-                                                    value={inputValue}
-                                                    onSelect={() => {
-                                                        if (
-                                                            !teamIds.includes(
-                                                                inputValue,
-                                                            )
-                                                        ) {
-                                                            setTeamIds(
-                                                                (prev) => [
-                                                                    ...prev,
-                                                                    inputValue,
-                                                                ],
-                                                            );
-                                                        }
-                                                        setInputValue("");
-                                                        setComboboxOpen(false);
-                                                    }}
-                                                >
-                                                    Add "{inputValue}"
-                                                </ComboboxItem>
-                                            )}
-                                        {/* Filtered Teams */}
-                                        {filteredTeams.map((t) => (
-                                            <ComboboxItem
-                                                key={t.id}
-                                                value={t.id}
-                                                onSelect={() => {
-                                                    if (
-                                                        !teamIds.includes(t.id)
-                                                    ) {
-                                                        setTeamIds((prev) => [
-                                                            ...prev,
-                                                            t.id,
-                                                        ]);
-                                                    }
-                                                    setInputValue("");
-                                                }}
-                                            >
-                                                {t.name} ({t.abbrev})
-                                            </ComboboxItem>
-                                        ))}
-                                        {filteredTeams.length === 0 &&
-                                            !inputValue && (
-                                                <ComboboxEmpty>
-                                                    No teams found
-                                                </ComboboxEmpty>
-                                            )}
-                                    </ComboboxList>
-                                </ComboboxContent>
-                            </Combobox>
-                        </DndContext>
-                        <p className="text-[10px] text-muted-foreground">
-                            Click and hold to arrange teams by priority
-                        </p>
-                    </div>
+                    <TeamMultiSelect
+                        teams={availableTeams}
+                        selectedTeamIds={teamIds}
+                        onSelectionChange={setTeamIds}
+                        placeholder="Select teams..."
+                        label="Teams"
+                    />
                 </div>
 
                 <DialogFooter>
