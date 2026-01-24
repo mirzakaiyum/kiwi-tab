@@ -19,16 +19,11 @@
 
   "host_permissions": [
     "https://suggestqueries.google.com/*",
-    "https://api.duckduckgo.com/*",
     "https://en.wikipedia.org/*",
-    "https://chatgpt.com/*",
-    "https://www.perplexity.ai/*",
-    "https://static.cricinfo.com/*",
     "https://site.api.espn.com/*",
     "https://api.aladhan.com/*",
     "https://aladhan.api.islamic.network/*",
-    "https://aladhan.api.alislam.ru/*",
-    "https://images.pexels.com/*"
+    "https://aladhan.api.alislam.ru/*"
   ],
 
   "icons": {

@@ -33,9 +33,9 @@ Google AI, DuckDuckGo, ChatGPT, Perplexity).
 
 ### Background Media
 
-- **Pexels API**: We use Pexels to provide high-quality background images and
+- **Pexels**: We use Pexels to provide high-quality background images and
   videos. Requests for these media assets are made directly from your browser to
-  the Pexels API. Providing these assets is the sole purpose of this
+  the Pexels. Providing these assets is the sole purpose of this
   integration.
 
 ### Widgets
@@ -50,15 +50,12 @@ Nothing is stored on our end, however we cannot control how the service
 providers are using your data. You can refer to the privacy policy of each
 provider below. The extension communicates with the following domains:
 
-- **Google & Gemini** (`suggestqueries.google.com`, `gemini.google.com`)
-- **DuckDuckGo** (`api.duckduckgo.com`)
-- **OpenAI** (`chatgpt.com`)
-- **Perplexity AI** (`www.perplexity.ai`)
+- **Google** (`suggestqueries.google.com`)
 - **Wikipedia** (`en.wikipedia.org`)
-- **ESPN / Cricinfo** (`static.cricinfo.com`, `site.api.espn.com`)
+- **ESPN** (`site.api.espn.com`)
 - **Aladhan** (`api.aladhan.com`, `aladhan.api.islamic.network`,
   `aladhan.api.alislam.ru`)
-- **Pexels** (`images.pexels.com`)
+- **Pexels** (`pexels.com`)
 
 ## 3. Local Storage & User Content
 
@@ -88,4 +85,5 @@ function:
 
 ## 5. Contact Us
 
-If you have questions about this Privacy Policy, please contact the developer though `mirzakaiyum@gmail.com`
+If you have questions about this Privacy Policy, please contact the developer
+though `mirzakaiyum@gmail.com`
