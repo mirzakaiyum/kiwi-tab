@@ -94,7 +94,7 @@ async function fetchWeather(
 }
 
 export default function WeatherWidget(
-  { city = "Dhaka", unit = "C", autoDetect = false, preview = false }:
+  { city = "London", unit = "C", autoDetect = false, preview = false }:
     WeatherWidgetProps,
 ) {
   // Cache key based on settings

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
     <head>
         <meta charset="UTF-8" />
         <link rel="icon" type="image/svg+xml" href="/icon/kiwi-favicon.png" />
@@ -7,67 +7,11 @@
         <title>Kiwi Tab</title>
         <!-- Preload Inter font to prevent layout shift -->
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <script>
-            // Immediately set theme to prevent flash of unstyled content (FOUC)
-            (function () {
-                const stored = localStorage.getItem("vite-ui-theme");
-                const theme =
-                    stored === "light"
-                        ? "light"
-                        : stored === "dark"
-                          ? "dark"
-                          : window.matchMedia("(prefers-color-scheme: dark)")
-                                  .matches
-                            ? "dark"
-                            : "light";
-                document.documentElement.classList.add(theme);
-            })();
-
-            // Check onboarding status early (before React loads)
-            // Uses chrome.storage.local for extension, localStorage fallback for dev
-            (function () {
-                window.__KIWI_ONBOARDED__ = false; // Default to not onboarded
-
-                if (
-                    typeof chrome !== "undefined" &&
-                    chrome.storage &&
-                    chrome.storage.local
-                ) {
-                    // Chrome extension context - async check
-                    chrome.storage.local.get(
-                        ["kiwi-onboarded"],
-                        function (result) {
-                            window.__KIWI_ONBOARDED__ =
-                                result["kiwi-onboarded"] === true;
-                            if (!window.__KIWI_ONBOARDED__) {
-                                document.documentElement.classList.add(
-                                    "onboarding",
-                                );
-                            }
-                            // Dispatch event so React knows the check is complete
-                            window.dispatchEvent(
-                                new Event("kiwi-onboarding-checked"),
-                            );
-                        },
-                    );
-                } else {
-                    // Development fallback - sync localStorage check
-                    window.__KIWI_ONBOARDED__ =
-                        localStorage.getItem("kiwi-onboarded") === "true";
-                    if (!window.__KIWI_ONBOARDED__) {
-                        document.documentElement.classList.add("onboarding");
-                    }
-                    window.dispatchEvent(new Event("kiwi-onboarding-checked"));
-                }
-            })();
-        </script>
+        <script src="/init.js"></script>
         <style>
-            /* Prevent flash with initial background and fade-in animation */
+            /* Dark theme background */
             html {
                 background-color: #1a1a1a;
-            }
-            html.light {
-                background-color: #ffffff;
             }
 
             /* Page fade-in animation - slightly longer delay for fonts to load */

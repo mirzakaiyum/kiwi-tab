@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ChevronRight, Check } from "lucide-react";
+import { Check, ChevronRight } from "lucide-react";
 
 const NAME_STORAGE_KEY = "kiwi-name";
 
@@ -19,8 +19,8 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
                         step === currentStep
                             ? "bg-primary"
                             : step < currentStep
-                              ? "bg-primary/80"
-                              : "bg-foreground/20"
+                            ? "bg-primary/80"
+                            : "bg-foreground/20"
                     }`}
                 />
             ))}
@@ -41,7 +41,11 @@ function StepOne({ onNext }: { onNext: () => void }) {
                     </span>{" "}
                     to use Kiwi Tab as your new tab page.
                 </p>
-                <Button onClick={onNext} size="lg" className="gap-2 mt-6 rounded-full font-semibold">
+                <Button
+                    onClick={onNext}
+                    size="lg"
+                    className="gap-2 mt-6 rounded-full font-semibold"
+                >
                     Next <ChevronRight className="h-4 w-4" />
                 </Button>
             </div>
@@ -65,14 +69,18 @@ function StepTwo({ onNext }: { onNext: () => void }) {
             <div className="flex-1 text-left space-y-4">
                 <h2 className="text-4xl font-semibold">Customize Your Space</h2>
                 <p className="text-foreground/70 text-lg leading-relaxed">
-                    Right-click on empty space at the bottom to access the context menu.
-                    You can use it to{" "}
+                    Right-click on empty space at the bottom to access the
+                    context menu. You can use it to{" "}
                     <span className="font-semibold text-foreground">
                         hide the footer
                     </span>{" "}
                     .
                 </p>
-                <Button onClick={onNext} size="lg" className="gap-2 mt-6 rounded-full font-semibold">
+                <Button
+                    onClick={onNext}
+                    size="lg"
+                    className="gap-2 mt-6 rounded-full font-semibold"
+                >
                     Next <ChevronRight className="h-4 w-4" />
                 </Button>
             </div>
@@ -114,7 +122,11 @@ function StepThree({ onComplete }: { onComplete: (name: string) => void }) {
                     className="text-center text-lg h-12 bg-background/50 backdrop-blur-sm"
                     autoFocus
                 />
-                <Button type="submit" size="lg" className="w-full gap-2 rounded-full font-semibold">
+                <Button
+                    type="submit"
+                    size="lg"
+                    className="w-full gap-2 rounded-full font-semibold"
+                >
                     Continue <Check className="h-4 w-4" />
                 </Button>
             </form>
@@ -131,15 +143,15 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             localStorage.setItem(NAME_STORAGE_KEY, name);
         }
 
-        // Mark as onboarded using chrome.storage.local (with localStorage fallback)
+        // Dual-storage pattern: Save to BOTH localStorage (instant sync) AND chrome.storage.local (backup)
+        // localStorage provides instant synchronous access on next page load
+        localStorage.setItem("kiwi-onboarded", "true");
+
+        // chrome.storage.local provides persistence even if localStorage is cleared
         if (typeof chrome !== "undefined" && chrome.storage?.local) {
             chrome.storage.local.set({ "kiwi-onboarded": true });
-        } else {
-            localStorage.setItem("kiwi-onboarded", "true");
         }
 
-        // Update window flag
-        window.__KIWI_ONBOARDED__ = true;
         document.documentElement.classList.remove("onboarding");
 
         // Notify other components

@@ -15,6 +15,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
+// Handle extension icon click - open a new tab
+chrome.action.onClicked.addListener(() => {
+  chrome.tabs.create({});
+});
+
 /**
  * Fetch a URL from the background script (bypasses CORS)
  */
@@ -40,5 +45,3 @@ async function fetchUrl(url, options = {}) {
     return { type: 'text', data: await response.text() };
   }
 }
-
-console.log('Kiwi Tab background service worker loaded');

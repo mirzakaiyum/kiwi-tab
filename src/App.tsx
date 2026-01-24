@@ -16,18 +16,13 @@ const Customize = lazy(
 );
 const Onboarding = lazy(() => import("./components/onboarding/onboarding"));
 
-// Declare the global window property set by index.html
-declare global {
-    interface Window {
-        __KIWI_ONBOARDED__: boolean;
-    }
-}
+const ONBOARDING_KEY = "kiwi-onboarded";
 
 export function App() {
-    // Read from window flag (set by index.html before React loads)
-    const [isOnboarded, setIsOnboarded] = useState(
-        () => window.__KIWI_ONBOARDED__ ?? false,
-    );
+    // Use localStorage for instant synchronous check (mirrored from chrome.storage.local)
+    const [isOnboarded, setIsOnboarded] = useState(() => {
+        return localStorage.getItem(ONBOARDING_KEY) === "true";
+    });
 
     // Show onboarding for first-time users
     if (!isOnboarded) {
