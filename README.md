@@ -2,7 +2,7 @@
 
 <h1 align="center">
   <a href="https://github.com/MakFissh/kiwi-tab">
-    <img src="public/icon/kiwi-128.png" width="20%" alt="Kiwi Tab logo">
+    <img src="public/kiwi-thumbnail.png" width="75%" alt="Kiwi Tab Thumbnail">
   </a>
 </h1>
 
