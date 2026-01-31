@@ -11,8 +11,8 @@ const MAX_PINNED_SITES = 16;
 // Get favicon URL using Google's service
 export function getFaviconUrl(url: string, size: number = 64): string {
   try {
-    const domain = new URL(url).hostname;
-    return `https://www.google.com/s2/favicons?domain=${domain}&sz=${size}`;
+    const domain = new URL(url).origin;
+    return `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=${domain}&size=${size}`;
   } catch {
     return `https://www.google.com/s2/favicons?domain=example.com&sz=${size}`;
   }

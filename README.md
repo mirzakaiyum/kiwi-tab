@@ -29,8 +29,8 @@ Here's some features:
 
 Kiwi Tab is built to run on Chromium-based browsers.
 
-[<img src="https://labels.tahoe.be/chrome_download_dark.svg" height="53" alt="Download Kiwi Tab for Chrome">](https://github.com/MakFissh/kiwi-tab/releases)
-[<img src="https://labels.tahoe.be/edge_download_dark.svg" height="53" alt="Download Kiwi Tab for Edge">](https://github.com/MakFissh/kiwi-tab/releases)
+[<img src="https://labels.tahoe.be/chrome_download_dark.svg" height="53" alt="Download Kiwi Tab for Chrome">](https://chromewebstore.google.com/detail/kiwi-tab-new-tab-page-wit/eejoooaokbndcbilebhdhaedjcebloom)
+[<img src="https://labels.tahoe.be/edge_download_dark.svg" height="53" alt="Download Kiwi Tab for Edge">](https://microsoftedge.microsoft.com/addons/detail/kiwi-tab-new-tab-page-w/cliaplchjkgppacjleebijoldaekfojk)
 
 _Manual installation: Download the zip from releases, enable "Developer mode" in
 extensions, and "Load unpacked"._
